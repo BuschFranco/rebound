@@ -1,0 +1,123 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { CashIcon, TruckIcon, WhatsAppIcon } from "@/components/icons";
+import { PriceTag } from "@/components/PriceTag";
+import { ProductGrid } from "@/components/ProductGrid";
+import { ProductPurchase } from "@/components/ProductPurchase";
+import { SectionHeading } from "@/components/SectionHeading";
+import { POLICIES } from "@/data/business";
+import { getCategoryLabel, getProductBySlug, getProducts, getRelated } from "@/lib/products";
+
+export function generateStaticParams() {
+  return getProducts().map((p) => ({ slug: p.slug }));
+}
+
+export async function generateMetadata({ params }: PageProps<"/producto/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const product = getProductBySlug(slug);
+  if (!product) return {};
+  return {
+    title: product.name,
+    description: product.description,
+    openGraph: { images: product.images.slice(0, 1) },
+  };
+}
+
+export default async function ProductPage({ params }: PageProps<"/producto/[slug]">) {
+  const { slug } = await params;
+  const product = getProductBySlug(slug);
+  if (!product) notFound();
+
+  const related = getRelated(product);
+
+  return (
+    <div className="bg-glow">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <nav aria-label="Ruta" className="mb-6 text-xs font-semibold uppercase tracking-widest text-muted">
+          <Link href="/" className="hover:text-ink">Inicio</Link>
+          <span className="mx-2">/</span>
+          <Link href={`/catalogo?categoria=${product.category}`} className="hover:text-ink">
+            {getCategoryLabel(product.category)}
+          </Link>
+          <span className="mx-2">/</span>
+          <span className="text-ink">{product.name}</span>
+        </nav>
+
+        <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr]">
+          <div className="grid gap-3">
+            {product.images.map((src, i) => (
+              <div
+                key={src}
+                className="relative aspect-square overflow-hidden rounded-2xl bg-surface ring-1 ring-line"
+              >
+                <Image
+                  src={src}
+                  alt={i === 0 ? product.name : `${product.name} – vista ${i + 1}`}
+                  fill
+                  loading={i === 0 ? "eager" : "lazy"}
+                  sizes="(min-width: 1024px) 55vw, 100vw"
+                  className="object-cover"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="lg:sticky lg:top-32 lg:self-start">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-[0.3em] text-accent">
+                {getCategoryLabel(product.category)}
+              </span>
+              {product.isNew && (
+                <span className="rounded bg-accent-2 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">
+                  Nuevo
+                </span>
+              )}
+            </div>
+            <h1 className="mt-3 font-display text-5xl uppercase italic leading-[0.95] sm:text-6xl">
+              {product.name}
+            </h1>
+            <div className="mt-4">
+              <PriceTag price={product.price} compareAtPrice={product.compareAtPrice} size="lg" />
+            </div>
+            <p className="mt-6 leading-relaxed text-muted">{product.description}</p>
+
+            <div className="mt-8 rounded-2xl border border-line bg-surface p-5 sm:p-6">
+              <ProductPurchase product={product} />
+            </div>
+
+            <ul className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+              <li className="flex items-center gap-2 rounded-xl border border-line px-3 py-3">
+                <WhatsAppIcon className="size-5 shrink-0 text-whatsapp" />
+                Pedido por WhatsApp
+              </li>
+              <li className="flex items-center gap-2 rounded-xl border border-line px-3 py-3">
+                <TruckIcon className="size-5 shrink-0 text-accent" />
+                Envíos CABA y PBA
+              </li>
+              <li className="flex items-center gap-2 rounded-xl border border-line px-3 py-3">
+                <CashIcon className="size-5 shrink-0 text-accent-2" />
+                Pagás al recibir
+              </li>
+            </ul>
+            <p className="mt-4 text-xs leading-relaxed text-muted">
+              Precio final con IVA incluido. Cambio gratis dentro de los {POLICIES.exchangeDays} días y
+              devolución sin costo por fallas (garantía legal de {POLICIES.legalWarrantyMonths} meses).{" "}
+              <Link href="/cambios-y-devoluciones" className="text-accent underline">
+                Ver condiciones
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {related.length > 0 && (
+          <section className="mt-24">
+            <SectionHeading eyebrow="Completá el look" title="También te puede gustar" />
+            <ProductGrid products={related} />
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
