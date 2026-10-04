@@ -38,6 +38,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1526086754506-a57f69b4700a")],
     sizes: ROPA,
     colors: [MORADO, NEGRO],
+    highlights: [
+      "Mesh que respira y no se pega al cuerpo",
+      "Números sublimados: no se cuartean ni se despegan",
+      "Sisa amplia para tirar sin que te tire",
+    ],
     isNew: true,
   },
   {
@@ -52,6 +57,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1749743823062-df9d9de55e94")],
     sizes: ROPA,
     colors: [BLANCO, NEGRO],
+    highlights: [
+      "Dos camisetas en una: clara y oscura",
+      "Seca rápido, ideal para entrenar",
+      "No se deforma con los lavados",
+    ],
   },
   {
     id: "r03",
@@ -64,6 +74,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1561781019-31d9dd448a61")],
     sizes: ROPA,
     colors: [NARANJA, NEGRO],
+    highlights: [
+      "Paneles ventilados en laterales",
+      "Doble capa en hombros: más resistente",
+      "Corte clásico que queda bien en la calle",
+    ],
   },
   {
     id: "r04",
@@ -76,6 +91,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1666121363164-17a59d227812")],
     sizes: ROPA,
     colors: [OLIVA, NEGRO],
+    highlights: [
+      "Secado rápido, no se empapa",
+      "Costuras planas: cero roce",
+      "Calce atlético, no ajustado",
+    ],
   },
   {
     id: "r05",
@@ -88,6 +108,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1726140872004-850c80900ae3")],
     sizes: ROPA,
     colors: [NEGRO, BLANCO],
+    highlights: [
+      "Algodón pesado que no transparenta",
+      "No se achica ni se deforma al lavar",
+      "Caída oversize, estilo post-partido",
+    ],
     isNew: true,
   },
   {
@@ -101,6 +126,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1688760117976-e3a339becff1")],
     sizes: ROPA,
     colors: [NARANJA, NEGRO, MORADO],
+    highlights: [
+      "Largo hasta la rodilla, como los de la cancha",
+      "Cintura elástica con cordón: no se baja",
+      "Bolsillos laterales profundos",
+    ],
     isNew: true,
   },
   {
@@ -115,6 +145,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1742473531981-12c925e98c19")],
     sizes: ROPA,
     colors: [NEGRO, BLANCO],
+    highlights: [
+      "Tela liviana: libertad total de movimiento",
+      "Paneles laterales contrastantes",
+      "Cintura elástica cómoda todo el día",
+    ],
   },
   {
     id: "r08",
@@ -127,6 +162,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1763740355836-a26addadfbbd")],
     sizes: ROPA,
     colors: [ROJO, NEGRO],
+    highlights: [
+      "Calza interna para jugar tranquilo",
+      "Bolsillo trasero con cierre para las llaves",
+      "Ultraliviano para jugar o correr",
+    ],
   },
   {
     id: "r09",
@@ -139,6 +179,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1631984564919-1f6b2313a71c")],
     sizes: CALZADO,
     colors: [NEGRO, NARANJA],
+    highlights: [
+      "Caña media que sostiene el tobillo",
+      "Suela espiga: agarre en cemento y parquet",
+      "Amortiguación reactiva en cada salto",
+    ],
     isNew: true,
   },
   {
@@ -153,6 +198,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1603808033192-082d6919d3e1"), img("photo-1603808033176-9d134e6f2c74")],
     sizes: CALZADO,
     colors: [BLANCO],
+    highlights: [
+      "Livianas para jugadores rápidos",
+      "Capellada fácil de limpiar",
+      "De la cancha a la calle sin cambiarte",
+    ],
   },
   {
     id: "r11",
@@ -165,6 +215,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1600185365483-26d7a4cc7519"), img("photo-1600185365926-3a2ce3cdb9eb")],
     sizes: CALZADO,
     colors: [BLANCO, NARANJA],
+    highlights: [
+      "Aire visible en el talón",
+      "Malla transpirable",
+      "Cómodas para usar todo el día",
+    ],
   },
   {
     id: "r12",
@@ -177,6 +232,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1679736468688-a394f6a1646f")],
     sizes: CALZADO,
     colors: [NEGRO],
+    highlights: [
+      "Clásico del streetball que no pasa de moda",
+      "Puntera de goma resistente",
+      "Suela vulcanizada durable",
+    ],
   },
   {
     id: "r13",
@@ -189,6 +249,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1652823780977-b22c0ed84c97")],
     sizes: ROPA,
     colors: [NEGRO, GRIS],
+    highlights: [
+      "Frisa pesada 400 g: abriga de verdad",
+      "No hace bolitas con los lavados",
+      "Puños y cintura que no se estiran",
+    ],
     isNew: true,
   },
   {
@@ -203,6 +268,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1677538537484-324385aff147")],
     sizes: ROPA,
     colors: [GRIS, NEGRO],
+    highlights: [
+      "El básico que combina con todo",
+      "Frisa suave por dentro",
+      "Calce regular, ni chico ni gigante",
+    ],
   },
   {
     id: "r15",
@@ -216,6 +286,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1643622782660-30dedcd8d75a")],
     sizes: ROPA,
     colors: [ROJO, NEGRO],
+    highlights: [
+      "Estilo retro de banco de suplentes",
+      "Cuello alto que corta el viento",
+      "Cierre completo y bolsillos laterales",
+    ],
   },
   {
     id: "r16",
@@ -228,6 +303,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1611308725032-74f0a551d018")],
     sizes: ROPA,
     colors: [NEGRO, BLANCO],
+    highlights: [
+      "Repele el agua",
+      "Capucha guardable en el cuello",
+      "Pesa casi nada: entra en la mochila",
+    ],
   },
   {
     id: "r17",
@@ -240,6 +320,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1627627256672-027a4613d028")],
     sizes: ["Nº 7", "Nº 6"],
     colors: [NARANJA],
+    highlights: [
+      "Goma de alto agarre para cemento",
+      "Bote parejo y canales profundos",
+      "Tamaño oficial",
+    ],
   },
   {
     id: "r18",
@@ -252,6 +337,11 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1589895869111-cab6bf8354c8")],
     sizes: ["39-42", "43-46"],
     colors: [BLANCO, NEGRO],
+    highlights: [
+      "Planta acolchada contra ampollas",
+      "Compresión en el arco",
+      "Pack de 3 pares",
+    ],
   },
   {
     id: "r19",
@@ -265,5 +355,10 @@ export const PRODUCTS: Product[] = [
     images: [img("photo-1708622833152-924c6e364138")],
     sizes: ["Único"],
     colors: [NEGRO],
+    highlights: [
+      "Compartimento separado para zapatillas",
+      "Tela resistente al agua",
+      "Correa regulable y acolchada",
+    ],
   },
 ];

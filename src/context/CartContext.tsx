@@ -10,13 +10,15 @@ import {
   type ReactNode,
 } from "react";
 import { cartStore } from "@/lib/cartStore";
-import { cartTotal } from "@/lib/whatsapp";
+import { computePromo, type PromoSummary } from "@/lib/promo";
 import type { CartItem, Product } from "@/types";
 
 type CartContextValue = {
   items: CartItem[];
   count: number;
+  /** Total a pagar, con la promo aplicada. */
   total: number;
+  promo: PromoSummary;
   isOpen: boolean;
   open: () => void;
   close: () => void;
@@ -57,11 +59,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const value = useMemo<CartContextValue>(
-    () => ({
+  const value = useMemo<CartContextValue>(() => {
+    const promo = computePromo(items);
+    return {
       items,
-      count: items.reduce((sum, i) => sum + i.quantity, 0),
-      total: cartTotal(items),
+      count: promo.units,
+      total: promo.total,
+      promo,
       isOpen,
       open,
       close,
@@ -69,9 +73,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       updateQty: cartStore.updateQty,
       removeItem: cartStore.remove,
       clear: cartStore.clear,
-    }),
-    [items, isOpen, open, close, addItem],
-  );
+    };
+  }, [items, isOpen, open, close, addItem]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

@@ -73,3 +73,42 @@ export function filterProducts({
 export function getMaxDiscount() {
   return Math.max(0, ...getOnSale().map((p) => discountPercent(p.price, p.compareAtPrice)));
 }
+
+/** Qué categoría suele sumarse a cada una (para sugerir en el carrito). */
+const COMPLEMENTS: Record<Category, Category[]> = {
+  camisetas: ["shorts", "zapatillas", "accesorios"],
+  shorts: ["camisetas", "accesorios", "zapatillas"],
+  zapatillas: ["accesorios", "shorts", "camisetas"],
+  buzos: ["shorts", "camperas", "accesorios"],
+  camperas: ["buzos", "camisetas", "accesorios"],
+  accesorios: ["camisetas", "shorts", "zapatillas"],
+};
+
+/** Sugerencias para "Completá el look": productos de categorías complementarias que no están en el carrito. */
+export function getCartSuggestions(productIds: string[], limit = 3) {
+  const inCart = new Set(productIds);
+  const cartProducts = PRODUCTS.filter((p) => inCart.has(p.id));
+  const cartCategories = new Set(cartProducts.map((p) => p.category));
+  const complements = [...new Set(cartProducts.flatMap((p) => COMPLEMENTS[p.category]))];
+  // Primero lo que todavía no tiene; después el resto de las complementarias.
+  const wanted = [
+    ...complements.filter((c) => !cartCategories.has(c)),
+    ...complements.filter((c) => cartCategories.has(c)),
+  ];
+  const ranked = [
+    ...wanted.flatMap((c) => PRODUCTS.filter((p) => p.category === c)),
+    ...PRODUCTS.filter((p) => p.isNew),
+    ...PRODUCTS,
+  ];
+  const seen = new Set<string>();
+  const result: Product[] = [];
+  for (const p of ranked) {
+    if (inCart.has(p.id) || seen.has(p.id)) continue;
+    // Una sugerencia por categoría para que se vea variado.
+    if (result.some((r) => r.category === p.category) && result.length < wanted.length) continue;
+    seen.add(p.id);
+    result.push(p);
+    if (result.length === limit) break;
+  }
+  return result;
+}

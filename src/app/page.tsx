@@ -1,15 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CashIcon, TruckIcon, WhatsAppIcon } from "@/components/icons";
+import { Faq } from "@/components/Faq";
 import { ProductGrid } from "@/components/ProductGrid";
 import { SectionHeading } from "@/components/SectionHeading";
+import { StoryBlock } from "@/components/StoryBlock";
 import { BANNER_IMAGE, CATEGORIES, HERO_IMAGE } from "@/data/products";
-import { POLICIES } from "@/data/business";
+import { DELIVERY, POLICIES, PROMO } from "@/data/business";
+import { PROMO_ACTIVE } from "@/lib/promo";
 import { getMaxDiscount, getNewArrivals, getOnSale } from "@/lib/products";
 
 const MARQUEE = [
+  ...(PROMO_ACTIVE ? [`${PROMO.label} en toda la web`] : []),
   "Drop nuevo",
   "Pedí por WhatsApp",
+  `Entrega en ${DELIVERY.label}`,
   "Envíos en CABA y Provincia de Bs. As.",
   "Pagás al recibir",
   `Cambio gratis ${POLICIES.exchangeDays} días`,
@@ -41,7 +46,13 @@ export default function Home() {
         <div className="absolute -right-20 top-10 -z-10 size-[420px] rounded-full bg-accent-2/20 blur-[120px]" />
 
         <div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-32 sm:px-6 sm:pb-24">
-          <p className="text-xs font-bold uppercase tracking-[0.35em] text-accent">Temporada 2026</p>
+          {PROMO_ACTIVE ? (
+            <p className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-white">
+              {PROMO.label} en toda la web · llevá {PROMO.buy}, pagá {PROMO.pay}
+            </p>
+          ) : (
+            <p className="text-xs font-bold uppercase tracking-[0.35em] text-accent">Temporada 2026</p>
+          )}
           <h1 className="mt-4 max-w-3xl font-display text-[clamp(3.5rem,11vw,9rem)] uppercase italic leading-[0.85]">
             Jugá en
             <br />
@@ -172,6 +183,14 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <div className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">
+        <StoryBlock />
+      </div>
+
+      <div className="mx-auto max-w-3xl px-4 pt-20 sm:px-6">
+        <Faq />
+      </div>
     </>
   );
 }

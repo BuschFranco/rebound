@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import type { Product } from "@/types";
+import { QuantityPromoHint } from "./QuantityPromoHint";
+import { SizeGuide } from "./SizeGuide";
 
 export function ProductPurchase({ product }: { product: Product }) {
   const { addItem } = useCart();
@@ -52,8 +54,11 @@ export function ProductPurchase({ product }: { product: Product }) {
       </fieldset>
 
       <fieldset>
-        <legend className="mb-3 text-xs font-bold uppercase tracking-widest">
-          Talle: <span className="font-normal normal-case tracking-normal text-muted">{size || "Elegí un talle"}</span>
+        <legend className="mb-3 flex w-full items-center justify-between gap-3 text-xs font-bold uppercase tracking-widest">
+          <span>
+            Talle: <span className="font-normal normal-case tracking-normal text-muted">{size || "Elegí un talle"}</span>
+          </span>
+          <SizeGuide category={product.category} onPick={setSize} />
         </legend>
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
           {product.sizes.map((s) => (
@@ -108,6 +113,12 @@ export function ProductPurchase({ product }: { product: Product }) {
           Agregar al carrito
         </button>
       </div>
+
+      <QuantityPromoHint
+        product={product}
+        quantity={quantity}
+        onSetQuantity={setQuantity}
+      />
     </div>
   );
 }

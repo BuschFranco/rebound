@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CashIcon, TruckIcon, WhatsAppIcon } from "@/components/icons";
+import { DeliveryEstimate } from "@/components/DeliveryEstimate";
+import { Faq } from "@/components/Faq";
 import { PriceTag } from "@/components/PriceTag";
 import { ProductGrid } from "@/components/ProductGrid";
 import { ProductPurchase } from "@/components/ProductPurchase";
+import { PromoCallout } from "@/components/PromoCallout";
 import { SectionHeading } from "@/components/SectionHeading";
+import { StoryBlock } from "@/components/StoryBlock";
+import { TrustStrip } from "@/components/TrustStrip";
 import { POLICIES } from "@/data/business";
 import { getCategoryLabel, getProductBySlug, getProducts, getRelated } from "@/lib/products";
 
@@ -81,28 +85,32 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
             <div className="mt-4">
               <PriceTag price={product.price} compareAtPrice={product.compareAtPrice} size="lg" />
             </div>
-            <p className="mt-6 leading-relaxed text-muted">{product.description}</p>
-
-            <div className="mt-8 rounded-2xl border border-line bg-surface p-5 sm:p-6">
-              <ProductPurchase product={product} />
+            <div className="mt-5">
+              <PromoCallout price={product.price} />
             </div>
 
-            <ul className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-              <li className="flex items-center gap-2 rounded-xl border border-line px-3 py-3">
-                <WhatsAppIcon className="size-5 shrink-0 text-whatsapp" />
-                Pedido por WhatsApp
-              </li>
-              <li className="flex items-center gap-2 rounded-xl border border-line px-3 py-3">
-                <TruckIcon className="size-5 shrink-0 text-accent" />
-                Envíos CABA y PBA
-              </li>
-              <li className="flex items-center gap-2 rounded-xl border border-line px-3 py-3">
-                <CashIcon className="size-5 shrink-0 text-accent-2" />
-                Pagás al recibir
-              </li>
-            </ul>
+            {product.highlights && (
+              <ul className="mt-6 space-y-2">
+                {product.highlights.map((h) => (
+                  <li key={h} className="flex items-start gap-2.5 text-sm text-ink">
+                    <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
+                      ✓
+                    </span>
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <p className="mt-5 text-sm leading-relaxed text-muted">{product.description}</p>
+
+            <div className="mt-8 space-y-5 rounded-2xl border border-line bg-surface p-5 sm:p-6">
+              <ProductPurchase product={product} />
+              <DeliveryEstimate />
+              <TrustStrip />
+            </div>
             <p className="mt-4 text-xs leading-relaxed text-muted">
-              Precio final con IVA incluido. Cambio gratis dentro de los {POLICIES.exchangeDays} días y
+              Cambio gratis dentro de los {POLICIES.exchangeDays} días y
               devolución sin costo por fallas (garantía legal de {POLICIES.legalWarrantyMonths} meses).{" "}
               <Link href="/cambios-y-devoluciones" className="text-accent underline">
                 Ver condiciones
@@ -117,6 +125,11 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
             <ProductGrid products={related} />
           </section>
         )}
+
+        <div className="mt-24 grid gap-10 lg:grid-cols-2">
+          <Faq />
+          <StoryBlock className="lg:mt-[4.5rem] lg:self-start" />
+        </div>
       </div>
     </div>
   );

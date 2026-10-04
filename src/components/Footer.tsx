@@ -27,7 +27,7 @@ export function Footer() {
         {PERKS.map((perk) => (
           <li
             key={perk}
-            className="bg-surface px-4 py-5 text-center font-display text-lg uppercase italic leading-tight sm:text-xl"
+            className="flex items-center justify-center bg-surface px-4 py-5 text-center font-display text-lg uppercase italic leading-tight sm:text-xl"
           >
             {perk}
           </li>

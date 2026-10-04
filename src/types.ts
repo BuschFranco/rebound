@@ -23,6 +23,8 @@ export type Product = {
   sizes: string[];
   colors: ProductColor[];
   isNew?: boolean;
+  /** 3 beneficios cortos que responden las dudas típicas antes de comprar. */
+  highlights?: string[];
 };
 
 export type CartItem = {

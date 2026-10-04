@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getCategoryLabel } from "@/lib/products";
-import { discountPercent } from "@/lib/format";
+import { discountPercent, formatPrice } from "@/lib/format";
+import { PROMO } from "@/data/business";
+import { PROMO_ACTIVE, promoUnitPrice } from "@/lib/promo";
 import type { Product } from "@/types";
 import { PriceTag } from "./PriceTag";
 
@@ -56,6 +58,11 @@ export function ProductCard({ product, priority = false }: { product: Product; p
           </p>
           <h3 className="text-sm font-semibold uppercase leading-snug tracking-wide">{product.name}</h3>
           <PriceTag price={product.price} compareAtPrice={product.compareAtPrice} />
+          {PROMO_ACTIVE && (
+            <p className="text-[11px] font-semibold text-accent">
+              {formatPrice(promoUnitPrice(product.price))} c/u llevando {PROMO.buy}
+            </p>
+          )}
           <div className="flex gap-1.5 pt-0.5">
             {product.colors.map((c) => (
               <span

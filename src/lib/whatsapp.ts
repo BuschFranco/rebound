@@ -1,14 +1,13 @@
+import { PROMO } from "@/data/business";
 import type { CartItem } from "@/types";
 import { formatPrice } from "./format";
+import { computePromo } from "./promo";
 
 export const WHATSAPP_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, "");
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 
-export function cartTotal(items: CartItem[]) {
-  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-}
-
 export function buildOrderMessage(items: CartItem[], siteUrl = SITE_URL) {
+  const promo = computePromo(items);
   const lines = items.map((item, i) => {
     const subtotal = formatPrice(item.price * item.quantity);
     return [
@@ -24,7 +23,13 @@ export function buildOrderMessage(items: CartItem[], siteUrl = SITE_URL) {
     "",
     lines.join("\n\n"),
     "",
-    `*Total: ${formatPrice(cartTotal(items))}*` + " (sin envío)",
+    ...(promo.discount > 0
+      ? [
+          `Subtotal: ${formatPrice(promo.subtotal)}`,
+          `Promo ${PROMO.label} (${promo.freeUnits} gratis): -${formatPrice(promo.discount)}`,
+        ]
+      : []),
+    `*Total: ${formatPrice(promo.total)}* (sin envío)`,
     "",
     "Nombre: ",
     "Localidad de entrega (CABA o Provincia de Bs. As.): ",

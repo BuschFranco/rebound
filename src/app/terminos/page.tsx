@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage } from "@/components/LegalPage";
-import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES } from "@/data/business";
+import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES, PROMO } from "@/data/business";
 
 export const metadata: Metadata = { title: "Términos y condiciones" };
 
@@ -47,6 +47,15 @@ export default function TermsPage() {
           {POLICIES.promoTo}, salvo que se indique otro plazo en la publicación. El precio anterior
           que se muestra tachado es el precio de lista vigente antes de la promoción.
         </li>
+        {PROMO.enabled && (
+          <li>
+            <strong>Promoción {PROMO.label}:</strong> por cada {PROMO.buy} unidades incluidas en un
+            mismo pedido, las {PROMO.buy - PROMO.pay} de menor precio no se cobran. Se combina entre
+            todos los productos, talles, colores y categorías, y también con los productos en oferta.
+            Vigencia: del {POLICIES.promoFrom} al {POLICIES.promoTo}. El descuento se calcula sobre
+            los precios publicados y se muestra en el carrito y en el mensaje del pedido.
+          </li>
+        )}
         <li>
           Respetamos el precio publicado al momento en que enviaste tu pedido, aunque cambie
           después (Ley 24.240, art. 7).
