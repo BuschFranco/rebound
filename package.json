@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:start": "supabase start -x realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor",
+    "db:start": "supabase start -x realtime,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > src/lib/database.types.ts"

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SkeletonImage } from "./SkeletonImage";
 import Link from "next/link";
 import { useOrderedCategories } from "@/context/CatalogContext";
 import { Carousel } from "./Carousel";
@@ -24,7 +24,7 @@ export function CategoryCarousel() {
             href={`/catalogo?categoria=${c.slug}`}
             className="group relative block aspect-[3/4] overflow-hidden rounded-xl bg-surface ring-1 ring-inset ring-line transition hover:ring-2 hover:ring-accent"
           >
-            <Image
+            <SkeletonImage
               src={c.image}
               alt=""
               fill

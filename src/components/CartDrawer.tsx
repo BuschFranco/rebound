@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SkeletonImage } from "./SkeletonImage";
 import Link from "next/link";
 import { useLenis } from "lenis/react";
 import { useRouter } from "next/navigation";
@@ -166,7 +166,7 @@ export function CartDrawer() {
                       onClick={close}
                       className="relative aspect-square w-20 shrink-0 overflow-hidden rounded-lg bg-surface-2"
                     >
-                      <Image src={item.product.images[0]} alt={item.product.name} fill sizes="80px" className="object-cover" />
+                      <SkeletonImage src={item.product.images[0]} alt={item.product.name} fill sizes="80px" className="object-cover" />
                     </Link>
                     <div className="flex flex-1 flex-col">
                       <div className="flex justify-between gap-2">
@@ -235,7 +235,7 @@ export function CartDrawer() {
                       <li key={p.id}>
                         <Link href={`/producto/${p.slug}`} onClick={close} className="group block">
                           <span className="relative block aspect-square overflow-hidden rounded-lg bg-surface-2 ring-1 ring-line transition group-hover:ring-accent">
-                            <Image src={p.images[0]} alt="" fill sizes="120px" className="object-cover transition duration-500 group-hover:scale-105" />
+                            <SkeletonImage src={p.images[0]} alt="" fill sizes="120px" className="object-cover transition duration-500 group-hover:scale-105" />
                           </span>
                           <span className="mt-1.5 line-clamp-2 block text-[11px] font-semibold uppercase leading-tight">
                             {p.name}

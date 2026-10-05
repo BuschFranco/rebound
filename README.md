@@ -25,10 +25,33 @@ npm run dev
 | `npm run db:reset` | Borra la base local y la vuelve a crear con `supabase/migrations` + `supabase/seed.sql`. |
 | `npm run db:types` | Regenera `src/lib/database.types.ts` después de cambiar las tablas. |
 
+### Panel de administración (`admin/`)
+
+App de escritorio en Python (CustomTkinter) para manejar todo lo que está en la base sin entrar a Studio:
+
+- **Productos:** alta, edición y baja (u ocultarlos), precio, oferta (precio anterior con el % de descuento), fotos (subir desde la PC o pegar un link, ordenarlas: la primera es la principal), talles, colores, beneficios y fecha de publicación.
+- **Categorías:** alta y baja (se bloquea si todavía tiene productos), portada, orden, guía de talles y "Completá el look".
+- **Promociones:** crear y eliminar promos NxM con fechas de inicio y fin (hora de Argentina). Avisa si se superponen.
+- **Envíos:** zonas con costo, envío gratis, demora y las provincias/partidos que cubren (elegidos por nombre, vía Georef).
+
+Cómo abrirlo:
+
+1. Instalá [Python 3.10+](https://www.python.org/downloads/) (marcando "Add python.exe to PATH").
+2. Doble clic en `admin/iniciar.bat`. La primera vez instala las dependencias y abre `admin/.env` para completar:
+   - `SUPABASE_URL`: `http://127.0.0.1:54321` en local, o la URL del proyecto en la nube.
+   - `SUPABASE_SECRET_KEY`: en local, `npx supabase status` → `SECRET_KEY`. En la nube, Project Settings → API Keys → Secret keys.
+   - `SITE_URL` y `REVALIDATE_SECRET`: si se dejan vacíos, se toman del `.env.local` del sitio.
+3. Volvé a abrir `iniciar.bat`.
+
+> ⚠️ **La secret key da acceso total a la base.** Va solo en `admin/.env` (no se sube a git). **Nunca** la pongas en el sitio ni en Netlify.
+
+- Las fotos se achican a 1600 px, se guardan en webp y se suben al bucket público `catalog-images` del Storage de Supabase. Al borrar un producto o cambiar una foto, se borran del bucket las que ya no usa nadie.
+- Al guardar, el panel llama a `/api/revalidate/` y el sitio muestra el cambio en la siguiente visita. Si el sitio no responde, igual lo muestra en menos de 1 minuto.
+
 ### Cómo funciona el catálogo
 
 - Tablas `categories` y `products` (ver `supabase/migrations/`). Para ocultar un producto sin borrarlo: `active = false`. La fecha de publicación (`published_at`) define si se muestra como "Nuevo".
-- El sitio lee con la clave **publishable**: las políticas RLS solo permiten *leer* productos activos y categorías. Las altas y cambios se hacen desde Studio.
+- El sitio lee con la clave **publishable**: las políticas RLS solo permiten *leer* productos activos y categorías. Las altas y cambios se hacen desde el panel de administración (o Studio).
 - `src/lib/catalog.ts` trae el catálogo en el servidor. Next.js lo cachea y lo vuelve a consultar **como máximo cada 60 s**; los componentes del navegador lo reciben por `CatalogContext`.
 - Para ver un cambio al instante: `POST /api/revalidate/` con el header `x-revalidate-secret: <REVALIDATE_SECRET>`. En producción conviene automatizarlo con un *Database Webhook* de Supabase (ver Deploy).
 

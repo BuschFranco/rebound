@@ -38,14 +38,17 @@ export default function PrivacyPage() {
       </ul>
       <p>
         El sitio <strong>no tiene registro de usuarios</strong> ni formularios que guarden datos en
-        nuestros servidores, y no usamos cookies de publicidad ni de seguimiento.
+        nuestros servidores, y no usamos cookies de publicidad ni de seguimiento. La única cookie es
+        propia y funcional: <code>rebound-favorites</code> guarda los productos que marcaste como
+        favoritos (solo sus códigos, sin datos personales) para que no se pierdan; dura un año y la
+        podés borrar vaciando tus favoritos o desde la configuración del navegador.
       </p>
 
       <h2>3. Almacenamiento local del carrito</h2>
       <p>
         Para que no pierdas tu carrito al recargar la página, el sitio guarda en el almacenamiento
         local de tu navegador (localStorage) los productos elegidos y, si tocás &ldquo;Guardar&rdquo;,
-        la dirección de entrega y el nombre de quien recibe, además de la lista de productos que miraste
+        la dirección de entrega y el nombre de quien recibe, además de tus favoritos y de la lista de productos que miraste
         (para mostrarte &ldquo;Volvé a verlos&rdquo; y recomendaciones en la página de inicio). Esa información queda solo en tu
         dispositivo y no nos llega a nosotros, salvo que la incluyas en el mensaje de WhatsApp que
         decidís enviar. El carrito se borra solo si no se usa durante 30 días, y la dirección la podés

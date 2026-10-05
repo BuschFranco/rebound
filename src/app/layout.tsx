@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Anton, Inter } from "next/font/google";
 import { CartDrawer } from "@/components/CartDrawer";
+import { FavoritesDrawer } from "@/components/FavoritesDrawer";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import { CartProvider } from "@/context/CartContext";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import { CatalogProvider } from "@/context/CatalogContext";
 import { getCatalog } from "@/lib/catalog";
 import { PromoProvider } from "@/context/PromoContext";
@@ -68,11 +70,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <CatalogProvider catalog={catalog}>
             <PromoProvider>
               <CartProvider>
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer categories={catalog.categories} promotion={catalog.promotion} />
-                <CartDrawer />
-                <WhatsAppFloat />
+                <FavoritesProvider>
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer categories={catalog.categories} promotion={catalog.promotion} />
+                  <CartDrawer />
+                  <FavoritesDrawer />
+                  <WhatsAppFloat />
+                </FavoritesProvider>
               </CartProvider>
             </PromoProvider>
           </CatalogProvider>

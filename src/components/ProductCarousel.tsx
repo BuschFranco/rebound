@@ -4,17 +4,23 @@ import type { CategoryInfo, Product } from "@/types";
 import { Carousel } from "./Carousel";
 import { ProductCard } from "./ProductCard";
 
-/** Fila deslizable de productos: hasta CAROUSEL_MAX tarjetas y un "Ver más" al final. */
+const VIEW_MORE =
+  "whitespace-nowrap text-sm font-bold uppercase tracking-widest text-ink underline decoration-accent decoration-2 underline-offset-8 transition hover:text-accent";
+
+/** Fila deslizable de productos: hasta CAROUSEL_MAX tarjetas y un "Ver más" al final (link o acción). */
 export function ProductCarousel({
   products,
   categories,
   viewMoreHref,
+  onViewMore,
   viewMoreLabel = "Ver más",
   label,
 }: {
   products: Product[];
   categories: CategoryInfo[];
-  viewMoreHref: string;
+  viewMoreHref?: string;
+  /** En lugar de un link, una acción (ej. abrir el panel de favoritos). Solo desde componentes cliente. */
+  onViewMore?: () => void;
   viewMoreLabel?: string;
   /** Nombre accesible de la fila (ej. "Drop nuevo"). */
   label: string;
@@ -27,14 +33,19 @@ export function ProductCarousel({
         </li>
       ))}
       {/* "Ver más": solo texto subrayado, centrado en la altura de las tarjetas. */}
-      <li className="flex shrink-0 snap-end items-center justify-center px-6 sm:px-10">
-        <Link
-          href={viewMoreHref}
-          className="whitespace-nowrap text-sm font-bold uppercase tracking-widest text-ink underline decoration-accent decoration-2 underline-offset-8 transition hover:text-accent"
-        >
-          {viewMoreLabel}
-        </Link>
-      </li>
+      {(viewMoreHref || onViewMore) && (
+        <li className="flex shrink-0 snap-end items-center justify-center px-6 sm:px-10">
+          {viewMoreHref ? (
+            <Link href={viewMoreHref} className={VIEW_MORE}>
+              {viewMoreLabel}
+            </Link>
+          ) : (
+            <button type="button" onClick={onViewMore} className={VIEW_MORE}>
+              {viewMoreLabel}
+            </button>
+          )}
+        </li>
+      )}
     </Carousel>
   );
 }

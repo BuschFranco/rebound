@@ -93,6 +93,29 @@ export function filterProducts({
   return result;
 }
 
+/**
+ * Resultados del buscador en vivo: mismo criterio que el catálogo, ordenados por qué tan bien coincide
+ * el nombre, así con "pe" aparece "Pelota" antes que "Campera" o una coincidencia en la descripción:
+ * 0 = el nombre empieza con lo escrito · 1 = cada término empieza una palabra del nombre o la categoría ·
+ * 2 = el nombre contiene los términos · 3 = coincide solo en la descripción o el color.
+ */
+export function searchProducts(products: Product[], categories: CategoryInfo[], query: string) {
+  const q = normalize(query);
+  const terms = q.split(/\s+/).filter(Boolean);
+  const rank = (p: Product) => {
+    const name = normalize(p.name);
+    if (name.startsWith(q)) return 0;
+    const words = normalize(`${p.name} ${getCategoryLabel(categories, p.category)}`).split(/\s+/);
+    if (terms.every((t) => words.some((w) => w.startsWith(t)))) return 1;
+    if (terms.every((t) => name.includes(t))) return 2;
+    return 3;
+  };
+  return filterProducts({ products, categories, query })
+    .map((p, i) => ({ p, i, rank: rank(p) }))
+    .sort((a, b) => a.rank - b.rank || a.i - b.i)
+    .map((x) => x.p);
+}
+
 export function getMaxDiscount(products: Product[]) {
   return Math.max(0, ...getOnSale(products).map((p) => discountPercent(p.price, p.compareAtPrice)));
 }

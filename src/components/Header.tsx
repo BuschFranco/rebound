@@ -8,6 +8,7 @@ import { usePromo } from "@/context/PromoContext";
 import { POLICIES } from "@/data/business";
 import { useOrderedCategories } from "@/context/CatalogContext";
 import { CartButton } from "./CartButton";
+import { FavoritesButton } from "./FavoritesButton";
 import { CatalogMenu } from "./CatalogMenu";
 import { Logo } from "./Logo";
 import { PromoCountdown } from "./PromoCountdown";
@@ -99,7 +100,8 @@ export function Header() {
           </Suspense>
         </div>
 
-        <div className="ml-auto md:ml-0">
+        <div className="ml-auto flex items-center gap-1 md:ml-0">
+          <FavoritesButton />
           <CartButton />
         </div>
       </div>

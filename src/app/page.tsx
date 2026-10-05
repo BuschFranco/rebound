@@ -5,6 +5,7 @@ import { CashIcon, TruckIcon, WhatsAppIcon } from "@/components/icons";
 import { Faq } from "@/components/Faq";
 import { PromoCountdown } from "@/components/PromoCountdown";
 import { PromoGate } from "@/components/PromoGate";
+import { FavoritesSection } from "@/components/FavoritesSection";
 import { PersonalizedSections } from "@/components/PersonalizedSections";
 import { CategoryCarousel } from "@/components/CategoryCarousel";
 import { ProductCarousel } from "@/components/ProductCarousel";
@@ -189,6 +190,9 @@ export default async function Home() {
         <SectionHeading eyebrow="Precios de liquidación" title="En oferta" href="/ofertas" linkLabel="Ver todas" />
         <ProductCarousel products={onSale} categories={categories} viewMoreHref="/ofertas" label="En oferta" />
       </section>
+
+      {/* Tus favoritos (solo si el cliente marcó alguno) */}
+      <FavoritesSection />
 
       {/* Cómo comprar */}
       <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">

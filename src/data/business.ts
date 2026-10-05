@@ -53,7 +53,7 @@ export const DELIVERY = {
 /** Bloque "Detrás de la marca". Reemplazalo por la historia real del equipo. */
 export const STORY = {
   title: "Hecho por gente que juega",
-  text: "REBOUND nació en las canchas del conurbano: queríamos ropa de basket que aguante el partido del sábado y quede bien en la calle, sin pagar precios de importado. Elegimos cada tela y cada molde, y respondemos cada pedido nosotros mismos. Si algo no está bien, escribinos y lo resolvemos.",
+  text: "REBOUND nació en las canchas: queríamos ropa de basket que aguante el partido del sábado y quede bien en la calle, sin pagar precios de importado. Elegimos cada tela y cada molde, y respondemos cada pedido nosotros mismos. Si algo no está bien, escribinos y lo resolvemos.",
   signature: "El equipo de REBOUND",
 } as const;
 

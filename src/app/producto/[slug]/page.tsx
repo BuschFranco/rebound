@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { SkeletonImage } from "@/components/SkeletonImage";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeliveryEstimate } from "@/components/DeliveryEstimate";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { Faq } from "@/components/Faq";
 import { PriceTag } from "@/components/PriceTag";
 import { ProductCarousel } from "@/components/ProductCarousel";
@@ -106,7 +107,7 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
                 key={src}
                 className="relative aspect-square overflow-hidden rounded-2xl bg-surface ring-1 ring-line"
               >
-                <Image
+                <SkeletonImage
                   src={src}
                   alt={i === 0 ? product.name : `${product.name} – vista ${i + 1}`}
                   fill
@@ -129,9 +130,10 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
                 </span>
               )}
             </div>
-            <h1 className="mt-3 font-display text-5xl uppercase italic leading-[0.95] sm:text-6xl">
-              {product.name}
-            </h1>
+            <div className="mt-3 flex items-start justify-between gap-4">
+              <h1 className="font-display text-5xl uppercase italic leading-[0.95] sm:text-6xl">{product.name}</h1>
+              <FavoriteButton productId={product.id} productName={product.name} variant="inline" className="mt-1" />
+            </div>
             <div className="mt-4">
               <PriceTag price={product.price} compareAtPrice={product.compareAtPrice} size="lg" />
             </div>

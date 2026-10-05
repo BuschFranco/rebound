@@ -16,7 +16,9 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "No autorizado" }, { status: 401 });
   }
 
-  revalidateTag(CATALOG_TAG, "max");
+  // { expire: 0 }: la próxima visita ya trae el catálogo nuevo (con "max" serviría una vez el viejo).
+  // Es lo que recomienda Next cuando el aviso llega de afuera (panel de administración o webhook).
+  revalidateTag(CATALOG_TAG, { expire: 0 });
   return Response.json({ ok: true, revalidated: CATALOG_TAG });
 }
 

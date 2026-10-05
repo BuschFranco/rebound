@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SkeletonImage } from "./SkeletonImage";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useCatalog, useOrderedCategories } from "@/context/CatalogContext";
@@ -143,7 +143,7 @@ export function CatalogMenu({ active }: { active: boolean }) {
                     onClick={hide}
                     className="group relative block aspect-[3/4] overflow-hidden rounded-xl bg-surface ring-1 ring-line transition hover:ring-2 hover:ring-accent"
                   >
-                    <Image
+                    <SkeletonImage
                       src={c.image}
                       alt=""
                       fill

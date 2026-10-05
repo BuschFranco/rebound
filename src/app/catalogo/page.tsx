@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CatalogView } from "@/components/CatalogView";
-import { PageHero } from "@/components/PageHero";
+import { CatalogSkeleton } from "@/components/Skeletons";
 import { pageMetadata } from "@/lib/seo";
 
 // Los filtros (?categoria=, ?q=) se resuelven en el navegador: todas las variantes comparten esta URL canónica.
@@ -14,7 +14,7 @@ export const metadata: Metadata = pageMetadata({
 
 export default function CatalogPage() {
   return (
-    <Suspense fallback={<PageHero eyebrow="Toda la colección" title="Catálogo" />}>
+    <Suspense fallback={<CatalogSkeleton />}>
       <CatalogView />
     </Suspense>
   );
