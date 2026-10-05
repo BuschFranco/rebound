@@ -1,20 +1,20 @@
 import { PROMO } from "@/data/business";
-import type { CartItem } from "@/types";
+import type { CartLine } from "@/types";
 import { formatPrice } from "./format";
 import { computePromo } from "./promo";
 
 export const WHATSAPP_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, "");
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 
-export function buildOrderMessage(items: CartItem[], siteUrl = SITE_URL) {
-  const promo = computePromo(items);
-  const lines = items.map((item, i) => {
-    const subtotal = formatPrice(item.price * item.quantity);
+export function buildOrderMessage(cartLines: CartLine[], promoActive: boolean, siteUrl = SITE_URL) {
+  const promo = computePromo(cartLines, promoActive);
+  const lines = cartLines.map((line, i) => {
+    const subtotal = formatPrice(line.product.price * line.quantity);
     return [
-      `${i + 1}. *${item.name}*`,
-      `   Talle: ${item.size} | Color: ${item.color} | Cantidad: ${item.quantity}`,
+      `${i + 1}. *${line.product.name}*`,
+      `   Talle: ${line.size} | Color: ${line.color} | Cantidad: ${line.quantity}`,
       `   Subtotal: ${subtotal}`,
-      `   ${siteUrl}/producto/${item.slug}`,
+      `   ${siteUrl}/producto/${line.product.slug}`,
     ].join("\n");
   });
 

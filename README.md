@@ -22,7 +22,7 @@ npm run dev
 - **Productos y categorías:** `src/data/products.ts`
 - **Texto del mensaje de WhatsApp:** `src/lib/whatsapp.ts`
 - **Colores (tokens), gradiente de marca y tipografías (Anton + Inter):** `src/app/globals.css` y `src/app/layout.tsx`
-- **Logo e isotipo:** `src/components/Logo.tsx` y `src/app/icon.svg`
+- **Logo e isotipo:** `src/components/Logo.tsx` (usa `src/app/logo.png`) y el favicon `src/app/icon.png`
 - **Imágenes del hero y banner:** `HERO_IMAGE` / `BANNER_IMAGE` en `src/data/products.ts`
 - **Carrito (persistido en `localStorage`):** `src/lib/cartStore.ts` + `src/context/CartContext.tsx`
 
@@ -45,7 +45,7 @@ Páginas incluidas: `/terminos`, `/privacidad`, `/cambios-y-devoluciones`, `/env
 | Identificación del proveedor (razón social, CUIT, domicilio, contacto) | Ley 24.240 · Res. 21/2004 | ⚠️ Completar en `business.ts` |
 | QR de Data Fiscal (Formulario 960/D) | ARCA | ⚠️ Generarlo en ARCA y cargar link + imagen en `business.ts` |
 | Política de privacidad y leyenda de la AAIP | Ley 25.326 · Disp. 10/2008 | ✅ `/privacidad` |
-| Precios finales en pesos con IVA incluido, vigencia de promociones | Ley 24.240 art. 7 · Ley 22.802 | ✅ (actualizá `promoFrom` / `promoTo`) |
+| Precios finales en pesos con IVA incluido, vigencia de promociones | Ley 24.240 art. 7 · Ley 22.802 | ✅ (la promo 3x2 dura 14 días desde el primer ingreso de cada visitante; ver `PROMO.durationDays` en `business.ts`) |
 | IVA contenido discriminado en la factura | Ley 27.743 (Transparencia Fiscal) | ⚠️ Se cumple en el comprobante que emitís, no en la web |
 
 Antes de lanzar también conviene: inscripción en ARCA (monotributo o RI) e Ingresos Brutos (ARBA/AGIP), registrar la marca en el INPI, inscribir la base de datos de clientes ante la AAIP, reemplazar las fotos de ejemplo por fotos propias y hacer revisar los textos legales por un abogado.

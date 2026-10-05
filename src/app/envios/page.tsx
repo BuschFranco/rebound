@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { BUSINESS, POLICIES } from "@/data/business";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Envíos y pagos" };
+export const metadata: Metadata = pageMetadata({
+  title: "Envíos y pagos",
+  description: "Envíos a CABA y Provincia de Buenos Aires en 24 a 72 h hábiles. Pagás al recibir.",
+  path: "/envios/",
+});
 
 export default function ShippingPage() {
   return (

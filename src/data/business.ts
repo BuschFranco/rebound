@@ -5,11 +5,11 @@
  */
 export const BUSINESS = {
   brand: "REBOUND",
-  legalName: "COMPLETAR Razón social o nombre del titular",
+  legalName: "Franco Busch",
   cuit: "COMPLETAR XX-XXXXXXXX-X",
   taxCondition: "COMPLETAR Monotributo / Responsable inscripto",
-  address: "COMPLETAR Calle 1234, Localidad, Provincia de Buenos Aires",
-  email: "COMPLETAR contacto@tudominio.com.ar",
+  address: "Av. Corrientes 6120, Ciudad Autónoma de Buenos Aires",
+  email: "francobusch130@gmail.com",
   /** Horario de atención por WhatsApp y email. */
   hours: "Lunes a viernes de 10 a 18 h",
   /**
@@ -30,23 +30,24 @@ export const POLICIES = {
   shippingAreas: ["Ciudad Autónoma de Buenos Aires (CABA)", "Provincia de Buenos Aires"],
   shippingAreasShort: "CABA y Provincia de Buenos Aires",
   paymentMethods: ["Efectivo", "Transferencia bancaria"],
-  /** Vigencia de las promociones (Ley 22.802 de Lealtad Comercial / Ley 24.240 art. 7). */
-  promoFrom: "1 de octubre de 2026",
-  promoTo: "31 de octubre de 2026",
+  /** Vigencia de las promociones (Ley 22.802 de Lealtad Comercial / Ley 24.240 art. 7): se cuenta desde el primer ingreso de cada visitante (ver PROMO.durationDays). */
+  promoValidity: "14 días desde tu primer ingreso al sitio",
   /** Fecha de última actualización de los textos legales. */
-  lastUpdated: "4 de octubre de 2026",
+  lastUpdated: "5 de octubre de 2026",
 } as const;
 
 /**
  * Promo por cantidad: cada `buy` unidades, pagás `pay` (la de menor precio sale gratis).
  * Se combina entre productos, talles, colores y categorías. Poné `enabled: false` para desactivarla.
- * Su vigencia es la de POLICIES.promoFrom / promoTo.
+ * Dura `durationDays` días desde el primer ingreso de cada visitante (se guarda en su navegador);
+ * pasado ese plazo la promo se apaga para él (ver src/context/PromoContext.tsx).
  */
 export const PROMO = {
   enabled: true,
   buy: 3,
   pay: 2,
   label: "3x2",
+  durationDays: 14,
 } as const;
 
 /**

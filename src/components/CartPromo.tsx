@@ -1,12 +1,14 @@
 "use client";
 
+import { usePromo } from "@/context/PromoContext";
 import { POLICIES, PROMO } from "@/data/business";
 import type { PromoSummary } from "@/lib/promo";
-import { PROMO_ACTIVE } from "@/lib/promo";
+import { PromoCountdown } from "./PromoCountdown";
 
 /** Barra de progreso del NxM: muestra cuánto falta para la próxima unidad gratis. */
 export function CartPromo({ promo }: { promo: PromoSummary }) {
-  if (!PROMO_ACTIVE || promo.units === 0) return null;
+  const { active } = usePromo();
+  if (!active || promo.units === 0) return null;
 
   const filled = promo.units % PROMO.buy;
   const completedGroup = filled === 0;
@@ -39,8 +41,9 @@ export function CartPromo({ promo }: { promo: PromoSummary }) {
         })}
       </div>
       <p className="mt-2 text-[11px] text-muted">
-        Válido del {POLICIES.promoFrom} al {POLICIES.promoTo}. Combinable entre todos los productos.
+        Válido {POLICIES.promoValidity}. Combinable entre todos los productos.
       </p>
+      <PromoCountdown className="mt-1 text-xs font-semibold text-accent" />
     </div>
   );
 }

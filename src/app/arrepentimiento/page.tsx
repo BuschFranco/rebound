@@ -3,11 +3,13 @@ import Link from "next/link";
 import { LegalPage } from "@/components/LegalPage";
 import { RevocationForm } from "@/components/RevocationForm";
 import { POLICIES } from "@/data/business";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Botón de arrepentimiento",
   description: "Cancelá tu compra dentro de los 10 días de recibida, sin costo y sin registrarte.",
-};
+  path: "/arrepentimiento/",
+});
 
 export default function RevocationPage() {
   return (

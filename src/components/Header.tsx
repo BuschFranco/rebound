@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
+import { usePromo } from "@/context/PromoContext";
 import { POLICIES, PROMO } from "@/data/business";
 import { CATEGORIES } from "@/data/products";
-import { PROMO_ACTIVE } from "@/lib/promo";
 import { CartButton } from "./CartButton";
 import { CatalogMenu } from "./CatalogMenu";
 import { Logo } from "./Logo";
+import { PromoCountdown } from "./PromoCountdown";
 import { SearchBar } from "./SearchBar";
 import { CloseIcon, MenuIcon } from "./icons";
 
@@ -22,12 +23,17 @@ const NAV = [
 export function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { active: promoActive } = usePromo();
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-background/80 backdrop-blur-xl">
       <div className="bg-gradient-brand px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
-        {PROMO_ACTIVE && `${PROMO.label} en toda la web · `}Pagás al recibir · Envíos en CABA y PBA · Cambio
-        gratis {POLICIES.exchangeDays} días
+        {promoActive && (
+          <>
+            {PROMO.label} en toda la web · <PromoCountdown className="gap-1" /> ·{" "}
+          </>
+        )}
+        Pagás al recibir · Envíos en CABA y PBA · Cambio gratis {POLICIES.exchangeDays} días
       </div>
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
         <button

@@ -2,8 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage } from "@/components/LegalPage";
 import { BUSINESS, POLICIES } from "@/data/business";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Cambios, devoluciones y garantía" };
+export const metadata: Metadata = pageMetadata({
+  title: "Cambios, devoluciones y garantía",
+  description: "Cambio gratis dentro de los 30 días y garantía legal de 6 meses por fallas en productos nuevos.",
+  path: "/cambios-y-devoluciones/",
+});
 
 export default function ReturnsPage() {
   return (

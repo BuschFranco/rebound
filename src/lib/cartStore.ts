@@ -1,16 +1,36 @@
 import type { CartItem } from "@/types";
+import { getProductById } from "./products";
 
-const STORAGE_KEY = "rebound-cart-v1";
+const STORAGE_KEY = "rebound-cart-v2";
+/** Versión anterior: guardaba también precio y nombre, que quedaban desactualizados. */
+const LEGACY_KEY = "rebound-cart-v1";
 const EMPTY: CartItem[] = [];
 
 let items: CartItem[] | null = null;
 const listeners = new Set<() => void>();
 
+/** Se queda solo con lo que sigue existiendo en el catálogo (producto, talle y color). */
+function sanitize(parsed: unknown): CartItem[] {
+  if (!Array.isArray(parsed)) return EMPTY;
+  const byKey = new Map<string, CartItem>();
+  for (const raw of parsed) {
+    if (typeof raw !== "object" || raw === null) continue;
+    const { productId, size, color, quantity } = raw as Partial<CartItem>;
+    if (typeof productId !== "string" || typeof size !== "string" || typeof color !== "string") continue;
+    if (typeof quantity !== "number" || !Number.isFinite(quantity) || quantity <= 0) continue;
+    const product = getProductById(productId);
+    if (!product || !product.sizes.includes(size) || !product.colors.some((c) => c.name === color)) continue;
+    const key = `${productId}__${size}__${color}`;
+    const prev = byKey.get(key);
+    byKey.set(key, { key, productId, size, color, quantity: (prev?.quantity ?? 0) + Math.floor(quantity) });
+  }
+  return [...byKey.values()];
+}
+
 function read(): CartItem[] {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? (parsed as CartItem[]) : EMPTY;
+    const raw = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_KEY);
+    return raw ? sanitize(JSON.parse(raw)) : EMPTY;
   } catch {
     return EMPTY;
   }
@@ -20,6 +40,7 @@ function write(next: CartItem[]) {
   items = next;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.removeItem(LEGACY_KEY);
   } catch {
     // Storage unavailable (private mode, blocked): the cart still works in memory.
   }

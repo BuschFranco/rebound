@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLenis } from "lenis/react";
 import { useEffect } from "react";
 import { useCart } from "@/context/CartContext";
+import { usePromo } from "@/context/PromoContext";
 import { PROMO } from "@/data/business";
 import { formatPrice } from "@/lib/format";
 import { getCartSuggestions } from "@/lib/products";
@@ -13,8 +14,9 @@ import { CartPromo } from "./CartPromo";
 import { CashIcon, CloseIcon, TrashIcon, TruckIcon, WhatsAppIcon } from "./icons";
 
 export function CartDrawer() {
-  const { items, isOpen, close, total, count, promo, updateQty, removeItem, clear } = useCart();
-  const suggestions = getCartSuggestions(items.map((i) => i.productId));
+  const { lines, isOpen, close, total, count, promo, updateQty, removeItem, clear } = useCart();
+  const { active: promoActive } = usePromo();
+  const suggestions = getCartSuggestions(lines.map((l) => l.productId));
   const lenis = useLenis();
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function CartDrawer() {
       process.env.NEXT_PUBLIC_SITE_URL ||
       window.location.origin + (process.env.NEXT_PUBLIC_BASE_PATH ?? "")
     ).replace(/\/$/, "");
-    window.open(buildWhatsAppUrl(buildOrderMessage(items, siteUrl)), "_blank", "noopener,noreferrer");
+    window.open(buildWhatsAppUrl(buildOrderMessage(lines, promoActive, siteUrl)), "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -66,7 +68,7 @@ export function CartDrawer() {
           </button>
         </div>
 
-        {items.length === 0 ? (
+        {lines.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="font-display text-4xl uppercase italic">Sin jugadas</p>
             <p className="text-muted">Tu carrito está vacío.</p>
@@ -83,23 +85,23 @@ export function CartDrawer() {
             <CartPromo promo={promo} />
             <div className="flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
               <ul className="divide-y divide-line px-5">
-                {items.map((item) => (
+                {lines.map((item) => (
                   <li key={item.key} className="flex gap-4 py-4">
                     <Link
-                      href={`/producto/${item.slug}`}
+                      href={`/producto/${item.product.slug}`}
                       onClick={close}
                       className="relative aspect-square w-20 shrink-0 overflow-hidden rounded-lg bg-surface-2"
                     >
-                      <Image src={item.image} alt={item.name} fill sizes="80px" className="object-cover" />
+                      <Image src={item.product.images[0]} alt={item.product.name} fill sizes="80px" className="object-cover" />
                     </Link>
                     <div className="flex flex-1 flex-col">
                       <div className="flex justify-between gap-2">
-                        <p className="text-sm font-semibold uppercase leading-snug tracking-wide">{item.name}</p>
+                        <p className="text-sm font-semibold uppercase leading-snug tracking-wide">{item.product.name}</p>
                         <button
                           type="button"
                           onClick={() => removeItem(item.key)}
                           className="text-muted hover:text-accent"
-                          aria-label={`Quitar ${item.name}`}
+                          aria-label={`Quitar ${item.product.name}`}
                         >
                           <TrashIcon className="size-4" />
                         </button>
@@ -128,7 +130,7 @@ export function CartDrawer() {
                           </button>
                         </div>
                         <span className="text-sm font-semibold tabular-nums">
-                          {formatPrice(item.price * item.quantity)}
+                          {formatPrice(item.product.price * item.quantity)}
                         </span>
                       </div>
                     </div>

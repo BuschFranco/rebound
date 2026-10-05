@@ -1,5 +1,5 @@
 import { PROMO } from "@/data/business";
-import type { CartItem } from "@/types";
+import type { CartLine } from "@/types";
 
 export type PromoSummary = {
   units: number;
@@ -12,20 +12,18 @@ export type PromoSummary = {
   unitsToNextFree: number;
 };
 
-const FREE_PER_GROUP = PROMO.buy - PROMO.pay;
-
 /**
- * Aplica la promo NxM sobre todo el carrito: se ordenan las unidades de mayor a menor precio y,
+ * Aplica la promo NxM (si `active`, o sea que está habilitada y no venció para el visitante) sobre todo el carrito: se ordenan las unidades de mayor a menor precio y,
  * en cada grupo de `buy` unidades, las `buy - pay` más baratas salen gratis.
  */
-export function computePromo(items: CartItem[]): PromoSummary {
-  const prices = items.flatMap((i) => Array<number>(i.quantity).fill(i.price)).sort((a, b) => b - a);
+export function computePromo(lines: CartLine[], active: boolean): PromoSummary {
+  const prices = lines.flatMap((l) => Array<number>(l.quantity).fill(l.product.price)).sort((a, b) => b - a);
   const units = prices.length;
   const subtotal = prices.reduce((sum, p) => sum + p, 0);
 
   let discount = 0;
   let freeUnits = 0;
-  if (PROMO.enabled) {
+  if (active) {
     const groups = Math.floor(units / PROMO.buy);
     for (let g = 0; g < groups; g++) {
       const group = prices.slice(g * PROMO.buy, (g + 1) * PROMO.buy);
@@ -56,5 +54,3 @@ export function promoUnitPrice(price: number) {
 export function promoPackPrice(price: number) {
   return price * PROMO.pay;
 }
-
-export const PROMO_ACTIVE = PROMO.enabled && FREE_PER_GROUP > 0;

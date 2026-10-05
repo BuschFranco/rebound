@@ -27,14 +27,13 @@ export type Product = {
   highlights?: string[];
 };
 
+/** Lo único que se guarda del carrito: nombre, precio e imagen salen siempre del catálogo vigente. */
 export type CartItem = {
   key: string;
   productId: string;
-  slug: string;
-  name: string;
-  image: string;
-  price: number;
   size: string;
   color: string;
   quantity: number;
 };
+
+export type CartLine = CartItem & { product: Product };

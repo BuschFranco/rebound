@@ -6,7 +6,7 @@ export function PageHero({
   children,
   variant = "glow",
 }: {
-  eyebrow?: string;
+  eyebrow?: ReactNode;
   title: string;
   children?: ReactNode;
   variant?: "glow" | "gradient";

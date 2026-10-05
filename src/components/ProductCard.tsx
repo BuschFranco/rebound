@@ -1,15 +1,19 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { getCategoryLabel } from "@/lib/products";
 import { discountPercent, formatPrice } from "@/lib/format";
 import { PROMO } from "@/data/business";
-import { PROMO_ACTIVE, promoUnitPrice } from "@/lib/promo";
+import { usePromo } from "@/context/PromoContext";
+import { promoUnitPrice } from "@/lib/promo";
 import type { Product } from "@/types";
 import { PriceTag } from "./PriceTag";
 
 const SIZES = "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw";
 
 export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
+  const { active } = usePromo();
   const off = discountPercent(product.price, product.compareAtPrice);
   const [main, hover] = product.images;
 
@@ -58,7 +62,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
           </p>
           <h3 className="text-sm font-semibold uppercase leading-snug tracking-wide">{product.name}</h3>
           <PriceTag price={product.price} compareAtPrice={product.compareAtPrice} />
-          {PROMO_ACTIVE && (
+          {active && (
             <p className="text-[11px] font-semibold text-accent">
               {formatPrice(promoUnitPrice(product.price))} c/u llevando {PROMO.buy}
             </p>

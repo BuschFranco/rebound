@@ -2,8 +2,9 @@
 
 import { useCart } from "@/context/CartContext";
 import { PROMO } from "@/data/business";
+import { usePromo } from "@/context/PromoContext";
 import { formatPrice } from "@/lib/format";
-import { computePromo, PROMO_ACTIVE } from "@/lib/promo";
+import { computePromo } from "@/lib/promo";
 import type { Product } from "@/types";
 
 /**
@@ -20,23 +21,14 @@ export function QuantityPromoHint({
   quantity: number;
   onSetQuantity: (quantity: number) => void;
 }) {
-  const { items, promo: current } = useCart();
-  if (!PROMO_ACTIVE) return null;
+  const { lines, promo: current } = useCart();
+  const { active } = usePromo();
+  if (!active) return null;
 
-  const future = computePromo([
-    ...items,
-    {
-      key: "__preview__",
-      productId: product.id,
-      slug: product.slug,
-      name: product.name,
-      image: product.images[0],
-      price: product.price,
-      size: "",
-      color: "",
-      quantity,
-    },
-  ]);
+  const future = computePromo(
+    [...lines, { key: "__preview__", productId: product.id, size: "", color: "", quantity, product }],
+    active,
+  );
 
   const gained = future.freeUnits - current.freeUnits;
   const savings = future.discount - current.discount;

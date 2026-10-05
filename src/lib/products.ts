@@ -11,6 +11,10 @@ export function getProducts() {
   return PRODUCTS;
 }
 
+export function getProductById(id: string) {
+  return PRODUCTS.find((p) => p.id === id);
+}
+
 export function getProductBySlug(slug: string) {
   return PRODUCTS.find((p) => p.slug === slug);
 }

@@ -1,4 +1,6 @@
+import Image from "next/image";
 import { useId } from "react";
+import logo from "@/app/logo.png";
 
 export function LogoMark({ className = "size-8" }: { className?: string }) {
   const id = useId();
@@ -22,13 +24,14 @@ export function LogoMark({ className = "size-8" }: { className?: string }) {
   );
 }
 
-export function Logo({ className = "" }: { className?: string }) {
+export function Logo({ className = "h-11 sm:h-12" }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      <LogoMark className="size-7" />
-      <span className="font-display text-2xl uppercase italic leading-none tracking-wide">
-        Rebound
-      </span>
-    </span>
+    <Image
+      src={logo}
+      alt="REBOUND"
+      priority
+      sizes="160px"
+      className={`w-auto ${className}`}
+    />
   );
 }

@@ -1,24 +1,33 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { CashIcon, TruckIcon, WhatsAppIcon } from "@/components/icons";
 import { Faq } from "@/components/Faq";
+import { PromoCountdown } from "@/components/PromoCountdown";
+import { PromoGate } from "@/components/PromoGate";
 import { ProductGrid } from "@/components/ProductGrid";
 import { SectionHeading } from "@/components/SectionHeading";
 import { StoryBlock } from "@/components/StoryBlock";
 import { BANNER_IMAGE, CATEGORIES, HERO_IMAGE } from "@/data/products";
 import { DELIVERY, POLICIES, PROMO } from "@/data/business";
-import { PROMO_ACTIVE } from "@/lib/promo";
 import { getMaxDiscount, getNewArrivals, getOnSale } from "@/lib/products";
+import { pageMetadata } from "@/lib/seo";
 
-const MARQUEE = [
-  ...(PROMO_ACTIVE ? [`${PROMO.label} en toda la web`] : []),
-  "Drop nuevo",
-  "Pedí por WhatsApp",
-  `Entrega en ${DELIVERY.label}`,
-  "Envíos en CABA y Provincia de Bs. As.",
-  "Pagás al recibir",
-  `Cambio gratis ${POLICIES.exchangeDays} días`,
-  "Hecho para la cancha y la calle",
+export const metadata: Metadata = pageMetadata({
+  description:
+    "Indumentaria y zapatillas de basket. Armá tu pedido, mandalo por WhatsApp y pagá recién cuando lo recibís. Envíos en CABA y Provincia de Buenos Aires.",
+  path: "/",
+});
+
+const MARQUEE: { text: string; promo?: boolean }[] = [
+  { text: `${PROMO.label} en toda la web`, promo: true },
+  { text: "Drop nuevo" },
+  { text: "Pedí por WhatsApp" },
+  { text: `Entrega en ${DELIVERY.label}` },
+  { text: "Envíos en CABA y Provincia de Bs. As." },
+  { text: "Pagás al recibir" },
+  { text: `Cambio gratis ${POLICIES.exchangeDays} días` },
+  { text: "Hecho para la cancha y la calle" },
 ];
 
 export default function Home() {
@@ -46,13 +55,16 @@ export default function Home() {
         <div className="absolute -right-20 top-10 -z-10 size-[420px] rounded-full bg-accent-2/20 blur-[120px]" />
 
         <div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-32 sm:px-6 sm:pb-24">
-          {PROMO_ACTIVE ? (
-            <p className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-white">
-              {PROMO.label} en toda la web · llevá {PROMO.buy}, pagá {PROMO.pay}
+          <PromoGate
+            fallback={<p className="text-xs font-bold uppercase tracking-[0.35em] text-accent">Temporada 2026</p>}
+          >
+            <p className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full bg-gradient-brand px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-white">
+              <span>
+                {PROMO.label} en toda la web · llevá {PROMO.buy}, pagá {PROMO.pay}
+              </span>
+              <PromoCountdown className="tracking-widest" />
             </p>
-          ) : (
-            <p className="text-xs font-bold uppercase tracking-[0.35em] text-accent">Temporada 2026</p>
-          )}
+          </PromoGate>
           <h1 className="mt-4 max-w-3xl font-display text-[clamp(3.5rem,11vw,9rem)] uppercase italic leading-[0.85]">
             Jugá en
             <br />
@@ -84,15 +96,18 @@ export default function Home() {
         <div className="flex w-max animate-marquee">
           {[0, 1].map((copy) => (
             <ul key={copy} className="flex shrink-0">
-              {[...MARQUEE, ...MARQUEE].map((text, i) => (
-                <li
-                  key={i}
-                  className="flex items-center gap-8 pr-8 font-display text-2xl uppercase italic text-white/90"
-                >
-                  {text}
-                  <span className="size-2.5 rounded-full bg-gradient-brand" />
-                </li>
-              ))}
+              {[...MARQUEE, ...MARQUEE].map(({ text, promo }, i) => {
+                const item = (
+                  <li
+                    key={i}
+                    className="flex items-center gap-8 pr-8 font-display text-2xl uppercase italic text-white/90"
+                  >
+                    {text}
+                    <span className="size-2.5 rounded-full bg-gradient-brand" />
+                  </li>
+                );
+                return promo ? <PromoGate key={i}>{item}</PromoGate> : item;
+              })}
             </ul>
           ))}
         </div>
@@ -143,8 +158,13 @@ export default function Home() {
           <div className="absolute inset-0 -z-10 bg-gradient-brand opacity-85 mix-blend-multiply" />
           <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/60 to-transparent" />
           <div className="px-6 py-16 sm:px-12 sm:py-24">
-            <p className="text-xs font-bold uppercase tracking-[0.35em] text-white/80">
-              Del {POLICIES.promoFrom} al {POLICIES.promoTo}
+            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-bold uppercase tracking-[0.35em] text-white/80">
+              <PromoGate fallback={<span>Ofertas de temporada</span>}>
+                <span>
+                  Promo {PROMO.label} · {POLICIES.promoValidity}
+                </span>
+                <PromoCountdown className="tracking-widest" />
+              </PromoGate>
             </p>
             <h2 className="mt-3 font-display text-6xl uppercase italic leading-[0.9] sm:text-8xl">
               Hasta {maxDiscount}% off

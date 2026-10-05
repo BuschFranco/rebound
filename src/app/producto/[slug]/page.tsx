@@ -11,7 +11,10 @@ import { PromoCallout } from "@/components/PromoCallout";
 import { SectionHeading } from "@/components/SectionHeading";
 import { StoryBlock } from "@/components/StoryBlock";
 import { TrustStrip } from "@/components/TrustStrip";
-import { POLICIES } from "@/data/business";
+import { JsonLd } from "@/components/JsonLd";
+import { BUSINESS, POLICIES } from "@/data/business";
+import { pageMetadata } from "@/lib/seo";
+import { absoluteUrl } from "@/lib/site";
 import { getCategoryLabel, getProductBySlug, getProducts, getRelated } from "@/lib/products";
 
 export function generateStaticParams() {
@@ -22,11 +25,12 @@ export async function generateMetadata({ params }: PageProps<"/producto/[slug]">
   const { slug } = await params;
   const product = getProductBySlug(slug);
   if (!product) return {};
-  return {
+  return pageMetadata({
     title: product.name,
-    description: product.description,
-    openGraph: { images: product.images.slice(0, 1) },
-  };
+    description: `${product.description} Pedilo por WhatsApp y pagá al recibir.`,
+    path: `/producto/${product.slug}/`,
+    images: product.images.slice(0, 1),
+  });
 }
 
 export default async function ProductPage({ params }: PageProps<"/producto/[slug]">) {
@@ -35,9 +39,46 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
   if (!product) notFound();
 
   const related = getRelated(product);
+  const url = absoluteUrl(`/producto/${product.slug}/`);
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      description: product.description,
+      image: product.images,
+      sku: product.id,
+      category: getCategoryLabel(product.category),
+      brand: { "@type": "Brand", name: BUSINESS.brand },
+      color: product.colors.map((c) => c.name).join(", "),
+      offers: {
+        "@type": "Offer",
+        url,
+        priceCurrency: "ARS",
+        price: product.price,
+        availability: "https://schema.org/InStock",
+        itemCondition: "https://schema.org/NewCondition",
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Inicio", item: absoluteUrl("/") },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: getCategoryLabel(product.category),
+          item: absoluteUrl(`/catalogo/?categoria=${product.category}`),
+        },
+        { "@type": "ListItem", position: 3, name: product.name, item: url },
+      ],
+    },
+  ];
 
   return (
     <div className="bg-glow">
+      <JsonLd data={jsonLd} />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <nav aria-label="Ruta" className="mb-6 text-xs font-semibold uppercase tracking-widest text-muted">
           <Link href="/" className="hover:text-ink">Inicio</Link>

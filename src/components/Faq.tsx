@@ -1,12 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { usePromo } from "@/context/PromoContext";
 import { DELIVERY, POLICIES, PROMO } from "@/data/business";
-import { PROMO_ACTIVE } from "@/lib/promo";
 import { SectionHeading } from "./SectionHeading";
 
 type QA = { q: string; a: ReactNode };
 
-const QUESTIONS: QA[] = [
+function buildQuestions(promoActive: boolean): QA[] {
+  return [
   {
     q: "¿Cómo funciona pagar al recibir?",
     a: (
@@ -17,7 +20,7 @@ const QUESTIONS: QA[] = [
       </>
     ),
   },
-  ...(PROMO_ACTIVE
+  ...(promoActive
     ? [
         {
           q: `¿Cómo funciona el ${PROMO.label}?`,
@@ -25,7 +28,7 @@ const QUESTIONS: QA[] = [
             <>
               Por cada {PROMO.buy} productos que lleves, el más barato es gratis. Podés combinar
               modelos, talles, colores y categorías. El descuento se calcula solo en el carrito.
-              Válido del {POLICIES.promoFrom} al {POLICIES.promoTo}.
+              Válido {POLICIES.promoValidity}.
             </>
           ),
         },
@@ -70,14 +73,17 @@ const QUESTIONS: QA[] = [
       </>
     ),
   },
-];
+  ];
+}
 
 export function Faq({ className = "" }: { className?: string }) {
+  const { active } = usePromo();
+  const questions = buildQuestions(active);
   return (
     <section className={className}>
       <SectionHeading eyebrow="Sacate las dudas" title="Preguntas frecuentes" />
       <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
-        {QUESTIONS.map(({ q, a }) => (
+        {questions.map(({ q, a }) => (
           <details key={q} className="group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-semibold transition hover:text-accent [&::-webkit-details-marker]:hidden">
               {q}

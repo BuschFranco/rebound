@@ -1,10 +1,15 @@
+"use client";
+
+import { usePromo } from "@/context/PromoContext";
 import { POLICIES, PROMO } from "@/data/business";
 import { formatPrice } from "@/lib/format";
-import { PROMO_ACTIVE, promoPackPrice, promoUnitPrice } from "@/lib/promo";
+import { promoPackPrice, promoUnitPrice } from "@/lib/promo";
+import { PromoCountdown } from "./PromoCountdown";
 
 /** Explica la promo NxM con los números del producto que se está viendo. */
 export function PromoCallout({ price }: { price: number }) {
-  if (!PROMO_ACTIVE) return null;
+  const { active } = usePromo();
+  if (!active) return null;
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-brand p-[1px]">
       <div className="flex items-center gap-4 rounded-[15px] bg-surface/95 p-4">
@@ -18,8 +23,9 @@ export function PromoCallout({ price }: { price: number }) {
           </p>
           <p className="mt-0.5 text-xs text-muted">
             Combiná modelos, talles, colores y categorías: el más barato de cada {PROMO.buy} es gratis.
-            Válido del {POLICIES.promoFrom} al {POLICIES.promoTo}.
+            Válido {POLICIES.promoValidity}.
           </p>
+          <PromoCountdown className="mt-1 text-xs font-semibold text-accent" />
         </div>
       </div>
     </div>

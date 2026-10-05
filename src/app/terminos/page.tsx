@@ -2,17 +2,21 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage } from "@/components/LegalPage";
 import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES, PROMO } from "@/data/business";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Términos y condiciones" };
+export const metadata: Metadata = pageMetadata({
+  title: "Términos y condiciones",
+  description: "Condiciones de compra, precios, promociones, envíos y pagos de REBOUND.",
+  path: "/terminos/",
+});
 
 export default function TermsPage() {
   return (
     <LegalPage title="Términos y condiciones" current="/terminos">
       <h2>1. Quiénes somos</h2>
       <p>
-        Este sitio es operado por <strong>{BUSINESS.legalName}</strong>, CUIT {BUSINESS.cuit} (
-        {BUSINESS.taxCondition}), con domicilio en {BUSINESS.address}, en adelante &ldquo;
-        {BUSINESS.brand}&rdquo;. Contacto: {BUSINESS.email} y WhatsApp ({BUSINESS.hours}).
+        Este sitio es operado por <strong>{BUSINESS.legalName}</strong> (&ldquo;{BUSINESS.brand}&rdquo;), con
+        domicilio en {BUSINESS.address}. Contacto: {BUSINESS.email} y WhatsApp ({BUSINESS.hours}).
       </p>
       <p>
         Al usar el sitio y enviar un pedido aceptás estos términos. Se aplican junto con la Ley
@@ -43,16 +47,16 @@ export default function TermsPage() {
           confirmar la compra.
         </li>
         <li>
-          Las promociones y descuentos tienen vigencia del {POLICIES.promoFrom} al{" "}
-          {POLICIES.promoTo}, salvo que se indique otro plazo en la publicación. El precio anterior
-          que se muestra tachado es el precio de lista vigente antes de la promoción.
+          Los descuentos de precio muestran tachado el precio de lista vigente antes de la rebaja y
+          rigen mientras el producto permanezca publicado con ese precio.
         </li>
         {PROMO.enabled && (
           <li>
             <strong>Promoción {PROMO.label}:</strong> por cada {PROMO.buy} unidades incluidas en un
             mismo pedido, las {PROMO.buy - PROMO.pay} de menor precio no se cobran. Se combina entre
             todos los productos, talles, colores y categorías, y también con los productos en oferta.
-            Vigencia: del {POLICIES.promoFrom} al {POLICIES.promoTo}. El descuento se calcula sobre
+            Vigencia: {POLICIES.promoValidity}; el plazo de {PROMO.durationDays} días corridos se registra en tu
+            navegador y se muestra con una cuenta regresiva junto a la promoción. El descuento se calcula sobre
             los precios publicados y se muestra en el carrito y en el mensaje del pedido.
           </li>
         )}

@@ -10,11 +10,14 @@ import {
   type ReactNode,
 } from "react";
 import { cartStore } from "@/lib/cartStore";
+import { getProductById } from "@/lib/products";
+import { usePromo } from "./PromoContext";
 import { computePromo, type PromoSummary } from "@/lib/promo";
-import type { CartItem, Product } from "@/types";
+import type { CartLine, Product } from "@/types";
 
 type CartContextValue = {
-  items: CartItem[];
+  /** Ítems del carrito con el producto y precio vigentes del catálogo. */
+  lines: CartLine[];
   count: number;
   /** Total a pagar, con la promo aplicada. */
   total: number;
@@ -31,11 +34,12 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const items = useSyncExternalStore(
+  const stored = useSyncExternalStore(
     cartStore.subscribe,
     cartStore.getSnapshot,
     cartStore.getServerSnapshot,
   );
+  const { active: promoActive } = usePromo();
   const [isOpen, setIsOpen] = useState(false);
 
   const open = useCallback(() => setIsOpen(true), []);
@@ -46,10 +50,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       cartStore.add({
         key: `${product.id}__${size}__${color}`,
         productId: product.id,
-        slug: product.slug,
-        name: product.name,
-        image: product.images[0],
-        price: product.price,
         size,
         color,
         quantity,
@@ -60,9 +60,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<CartContextValue>(() => {
-    const promo = computePromo(items);
+    const lines = stored.flatMap((item) => {
+      const product = getProductById(item.productId);
+      return product ? [{ ...item, product }] : [];
+    });
+    const promo = computePromo(lines, promoActive);
     return {
-      items,
+      lines,
       count: promo.units,
       total: promo.total,
       promo,
@@ -74,7 +78,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem: cartStore.remove,
       clear: cartStore.clear,
     };
-  }, [items, isOpen, open, close, addItem]);
+  }, [stored, promoActive, isOpen, open, close, addItem]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

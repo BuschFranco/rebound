@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element -- el QR de Data Fiscal es una imagen externa de ARCA */
 import Link from "next/link";
-import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES } from "@/data/business";
+import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES, PROMO } from "@/data/business";
 import { CATEGORIES } from "@/data/products";
 import { Logo } from "./Logo";
+import { PromoGate } from "./PromoGate";
 
 const HELP_LINKS = [
   { href: "/envios", label: "Envíos y pagos" },
@@ -41,12 +42,6 @@ export function Footer() {
             Indumentaria y zapatillas de basket. Hecho para la cancha y la calle. Pedís por
             WhatsApp, coordinamos el envío y pagás al recibir.
           </p>
-          <Link
-            href="/arrepentimiento"
-            className="mt-6 inline-flex rounded-full border-2 border-accent px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-accent transition hover:bg-accent hover:text-black"
-          >
-            Botón de arrepentimiento
-          </Link>
         </div>
 
         <div>
@@ -76,37 +71,43 @@ export function Footer() {
         </div>
 
         <div className="space-y-4">
-          <a
-            href={CONSUMER_DEFENSE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block rounded-xl border border-line bg-surface-2 px-4 py-3 text-sm leading-snug transition hover:border-accent"
-          >
-            <span className="block font-bold">Defensa de las y los Consumidores</span>
-            <span className="text-muted">
-              Para reclamos <span className="font-semibold text-accent underline">ingrese aquí</span>
-            </span>
-          </a>
-          {BUSINESS.dataFiscalUrl ? (
+          <div className="divide-y divide-line rounded-xl border border-line bg-surface-2 text-sm leading-snug">
+            <a
+              href={CONSUMER_DEFENSE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block px-4 py-3 transition hover:text-accent"
+            >
+              <span className="block font-bold text-ink">Defensa de las y los Consumidores</span>
+              <span className="text-muted">
+                Para reclamos <span className="font-semibold text-accent underline">ingrese aquí</span>
+              </span>
+            </a>
+            <Link href="/arrepentimiento" className="block px-4 py-3 transition hover:text-accent">
+              <span className="block font-bold text-ink">Botón de arrepentimiento</span>
+              <span className="text-muted">
+                Cancelá tu compra en {POLICIES.revocationDays} días,{" "}
+                <span className="font-semibold text-accent underline">ingresá aquí</span>
+              </span>
+            </Link>
+          </div>
+          {BUSINESS.dataFiscalUrl && (
             <a href={BUSINESS.dataFiscalUrl} target="_blank" rel="noopener noreferrer" className="inline-block">
               <img src={BUSINESS.dataFiscalQrImage} alt="Data Fiscal ARCA" width={64} height={88} />
             </a>
-          ) : (
-            <p className="rounded-lg border border-dashed border-line px-3 py-2 text-xs text-muted">
-              QR de Data Fiscal (ARCA): completar en <code>src/data/business.ts</code>
-            </p>
           )}
         </div>
       </div>
 
       <div className="mx-auto max-w-7xl space-y-1 px-4 pb-8 text-xs text-muted sm:px-6">
         <p>
-          {BUSINESS.legalName} · CUIT {BUSINESS.cuit} · {BUSINESS.taxCondition} · {BUSINESS.address}{" "}
-          · {BUSINESS.email}
+          {BUSINESS.address} · {BUSINESS.email}
         </p>
         <p>
           Precios finales en pesos argentinos con IVA incluido. El costo de envío se informa antes
-          de confirmar la compra. Promociones válidas del {POLICIES.promoFrom} al {POLICIES.promoTo}.
+          de confirmar la compra. <PromoGate>
+            Promoción {PROMO.label} válida {POLICIES.promoValidity}.{" "}
+          </PromoGate>
           Imágenes ilustrativas.
         </p>
       </div>

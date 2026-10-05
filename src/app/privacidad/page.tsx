@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { BUSINESS } from "@/data/business";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Política de privacidad" };
+export const metadata: Metadata = pageMetadata({
+  title: "Política de privacidad",
+  description: "Cómo tratamos tus datos personales según la Ley 25.326 de Protección de Datos Personales.",
+  path: "/privacidad/",
+});
 
 export default function PrivacyPage() {
   return (
@@ -15,7 +20,7 @@ export default function PrivacyPage() {
 
       <h2>1. Responsable de los datos</h2>
       <p>
-        {BUSINESS.legalName}, CUIT {BUSINESS.cuit}, con domicilio en {BUSINESS.address}. Email:{" "}
+        {BUSINESS.legalName} ({BUSINESS.brand}), con domicilio en {BUSINESS.address}. Email:{" "}
         {BUSINESS.email}.
       </p>
 
