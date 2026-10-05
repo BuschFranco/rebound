@@ -1,9 +1,10 @@
 /* eslint-disable @next/next/no-img-element -- el QR de Data Fiscal es una imagen externa de ARCA */
 import Link from "next/link";
-import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES, PROMO } from "@/data/business";
-import { CATEGORIES } from "@/data/products";
+import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES } from "@/data/business";
+import { formatPromoValidity } from "@/lib/promo";
 import { Logo } from "./Logo";
 import { PromoGate } from "./PromoGate";
+import type { CategoryInfo, Promotion } from "@/types";
 
 const HELP_LINKS = [
   { href: "/envios", label: "Envíos y pagos" },
@@ -19,10 +20,10 @@ const PERKS = [
   `Envíos en ${POLICIES.shippingAreasShort}`,
 ];
 
-export function Footer() {
+export function Footer({ categories, promotion }: { categories: CategoryInfo[]; promotion: Promotion | null }) {
   return (
     <footer className="relative mt-28 overflow-hidden border-t border-line bg-surface">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-brand" aria-hidden />
+      <div className="absolute inset-x-0 top-0 h-px bg-accent" aria-hidden />
 
       <ul className="mx-auto grid max-w-7xl grid-cols-2 gap-px border-b border-line bg-line lg:grid-cols-4">
         {PERKS.map((perk) => (
@@ -47,7 +48,7 @@ export function Footer() {
         <div>
           <h3 className="text-xs font-bold uppercase tracking-widest">Categorías</h3>
           <ul className="mt-4 grid grid-cols-2 gap-2 text-sm text-muted">
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <li key={c.slug}>
                 <Link href={`/catalogo?categoria=${c.slug}`} className="transition hover:text-accent">
                   {c.label}
@@ -105,9 +106,12 @@ export function Footer() {
         </p>
         <p>
           Precios finales en pesos argentinos con IVA incluido. El costo de envío se informa antes
-          de confirmar la compra. <PromoGate>
-            Promoción {PROMO.label} válida {POLICIES.promoValidity}.{" "}
-          </PromoGate>
+          de confirmar la compra.{" "}
+          {promotion && (
+            <PromoGate>
+              Promoción {promotion.label} válida {formatPromoValidity(promotion)}.{" "}
+            </PromoGate>
+          )}
           Imágenes ilustrativas.
         </p>
       </div>

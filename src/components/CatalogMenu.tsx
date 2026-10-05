@@ -3,15 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { CATEGORIES, PRODUCTS } from "@/data/products";
+import { useCatalog, useOrderedCategories } from "@/context/CatalogContext";
+import { countByCategory } from "@/lib/products";
 
-const COUNTS = Object.fromEntries(
-  CATEGORIES.map((c) => [c.slug, PRODUCTS.filter((p) => p.category === c.slug).length]),
-);
 
 const CLOSE_DELAY = 140;
 
 export function CatalogMenu({ active }: { active: boolean }) {
+  const { products } = useCatalog();
+  const categories = useOrderedCategories();
+  const counts = countByCategory(products);
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panelId = useId();
@@ -94,11 +95,11 @@ export function CatalogMenu({ active }: { active: boolean }) {
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.3em] text-accent">Catálogo</p>
                 <p className="mt-2 font-display text-4xl uppercase italic leading-none">
-                  Elegí tu <span className="text-gradient pr-1">juego</span>
+                  Elegí tu <span className="pr-1 text-accent">juego</span>
                 </p>
               </div>
               <ul className="space-y-1">
-                {CATEGORIES.map((c, i) => (
+                {categories.map((c, i) => (
                   <li
                     key={c.slug}
                     className={`transition-all duration-500 ${
@@ -113,7 +114,7 @@ export function CatalogMenu({ active }: { active: boolean }) {
                     >
                       {c.label}
                       <span className="text-xs tabular-nums text-muted transition group-hover:text-accent">
-                        {COUNTS[c.slug]}
+                        {counts[c.slug] ?? 0}
                       </span>
                     </Link>
                   </li>
@@ -129,7 +130,7 @@ export function CatalogMenu({ active }: { active: boolean }) {
             </div>
 
             <ul className="hidden grid-cols-3 gap-3 lg:grid xl:grid-cols-6">
-              {CATEGORIES.map((c, i) => (
+              {categories.map((c, i) => (
                 <li
                   key={c.slug}
                   className={`transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
@@ -149,13 +150,13 @@ export function CatalogMenu({ active }: { active: boolean }) {
                       sizes="(min-width: 1280px) 14vw, 25vw"
                       className="object-cover transition duration-500 group-hover:scale-110"
                     />
-                    <span className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                    <span className="absolute inset-0 bg-black/45" />
                     <span className="absolute inset-x-3 bottom-3">
                       <span className="block font-display text-2xl uppercase italic leading-none">
                         {c.label}
                       </span>
                       <span className="mt-1 block text-[11px] font-semibold uppercase tracking-widest text-white/70">
-                        {COUNTS[c.slug]} productos
+                        {counts[c.slug] ?? 0} productos
                       </span>
                     </span>
                   </Link>

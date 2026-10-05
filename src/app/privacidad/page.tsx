@@ -43,10 +43,23 @@ export default function PrivacyPage() {
 
       <h2>3. Almacenamiento local del carrito</h2>
       <p>
-        Para que no pierdas tu carrito al recargar la página, el sitio guarda los productos
-        elegidos en el almacenamiento local de tu navegador (localStorage). Esa información queda
-        solo en tu dispositivo, no nos llega a nosotros y podés borrarla vaciando el carrito o los
-        datos del sitio en tu navegador.
+        Para que no pierdas tu carrito al recargar la página, el sitio guarda en el almacenamiento
+        local de tu navegador (localStorage) los productos elegidos y, si tocás &ldquo;Guardar&rdquo;,
+        la dirección de entrega y el nombre de quien recibe, además de la lista de productos que miraste
+        (para mostrarte &ldquo;Volvé a verlos&rdquo; y recomendaciones en la página de inicio). Esa información queda solo en tu
+        dispositivo y no nos llega a nosotros, salvo que la incluyas en el mensaje de WhatsApp que
+        decidís enviar. El carrito se borra solo si no se usa durante 30 días, y la dirección la podés
+        eliminar cuando quieras con &ldquo;Borrar mis datos&rdquo; en el carrito, el historial con
+        &ldquo;Borrar historial&rdquo; en la página de inicio, o borrando los datos del
+        sitio en tu navegador.
+      </p>
+
+      <h3>Ubicación</h3>
+      <p>
+        Solo si tocás <strong>&ldquo;Usar mi ubicación&rdquo;</strong>, el navegador te pide permiso para
+        compartirla. Las coordenadas, redondeadas a unos 100 metros, se envían una única vez al servicio
+        público Georef (datos.gob.ar) para saber tu partido o comuna y calcular el envío; no se guardan
+        en nuestros servidores. Lo mismo ocurre con el texto que escribís en el buscador de localidades.
       </p>
 
       <h2>4. Para qué usamos tus datos</h2>

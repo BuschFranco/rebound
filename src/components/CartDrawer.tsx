@@ -3,21 +3,39 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useLenis } from "lenis/react";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useCart } from "@/context/CartContext";
 import { usePromo } from "@/context/PromoContext";
-import { PROMO } from "@/data/business";
 import { formatPrice } from "@/lib/format";
+import { useCatalog } from "@/context/CatalogContext";
+import type { CartNotice } from "@/lib/cartValidation";
+import type { SavedAddress } from "@/types";
+import { addressStore } from "@/lib/addressStore";
+import { buildOrder, type Order } from "@/lib/order";
 import { getCartSuggestions } from "@/lib/products";
 import { buildOrderMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
+import { CartNotices } from "./CartNotices";
 import { CartPromo } from "./CartPromo";
+import { CartAddress } from "./CartAddress";
 import { CashIcon, CloseIcon, TrashIcon, TruckIcon, WhatsAppIcon } from "./icons";
 
 export function CartDrawer() {
-  const { lines, isOpen, close, total, count, promo, updateQty, removeItem, clear } = useCart();
-  const { active: promoActive } = usePromo();
-  const suggestions = getCartSuggestions(lines.map((l) => l.productId));
+  const { lines, notices, isOpen, close, count, promo, updateQty, removeItem, clear } = useCart();
+  const { promo: promotion } = usePromo();
+  const { products, categories, shippingZones } = useCatalog();
+  const savedAddress = useSyncExternalStore(addressStore.subscribe, addressStore.getSnapshot, addressStore.getServerSnapshot);
+  // Dirección que se está editando (null = no se edita). El envío se recalcula en vivo con el borrador.
+  const [addressDraft, setAddressDraft] = useState<SavedAddress | null>(null);
+  const address = addressDraft ?? savedAddress;
+  const location = address.location;
+  const suggestions = getCartSuggestions(products, categories, lines.map((l) => l.productId));
   const lenis = useLenis();
+  const router = useRouter();
+  const order = buildOrder({ lines, promotion, zones: shippingZones, location });
+  // Pedido verificado contra la base que difiere de lo mostrado: se muestra y se pide confirmación.
+  const [pending, setPending] = useState<{ order: Order; notices: CartNotice[] } | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -32,12 +50,65 @@ export function CartDrawer() {
     };
   }, [isOpen, close, lenis]);
 
-  function checkout() {
-    const siteUrl = (
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      window.location.origin + (process.env.NEXT_PUBLIC_BASE_PATH ?? "")
-    ).replace(/\/$/, "");
-    window.open(buildWhatsAppUrl(buildOrderMessage(lines, promoActive, siteUrl)), "_blank", "noopener,noreferrer");
+  function siteUrl() {
+    return (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(/\/$/, "");
+  }
+
+  /** Abre WhatsApp en una ventana ya abierta durante el clic (los navegadores bloquean abrirla después de esperar). */
+  function sendTo(win: Window | null, finalOrder: Order) {
+    const url = buildWhatsAppUrl(buildOrderMessage(finalOrder, address, siteUrl()));
+    if (win) win.location.assign(url);
+    else window.location.assign(url);
+  }
+
+  async function checkout() {
+    if (pending) {
+      const win = window.open("", "_blank");
+      if (win) win.opener = null;
+      sendTo(win, pending.order);
+      setPending(null);
+      return;
+    }
+
+    const win = window.open("", "_blank");
+    if (win) win.opener = null;
+    setChecking(true);
+    try {
+      // Verificación final: productos, precios y envío leídos de la base en este momento.
+      const res = await fetch("/api/cart/quote/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          // El precio "visto" es el que el cliente tiene en pantalla: así el servidor avisa qué cambió.
+          items: lines.map(({ key, productId, size, color, quantity, product }) => ({
+            key,
+            productId,
+            size,
+            color,
+            quantity,
+            name: product.name,
+            seenPrice: product.price,
+          })),
+          location,
+        }),
+      });
+      if (!res.ok) throw new Error("quote");
+      const quote = (await res.json()) as { order: Order; notices: CartNotice[] };
+      const changed = quote.notices.length > 0 || quote.order.total !== order.total;
+      if (changed) {
+        win?.close();
+        setPending(quote);
+        router.refresh();
+        return;
+      }
+      sendTo(win, quote.order);
+    } catch {
+      // Si la verificación falla (sin conexión con el servidor), no bloqueamos la compra:
+      // se envía lo que se ve en pantalla y el precio final se confirma por WhatsApp.
+      sendTo(win, order);
+    } finally {
+      setChecking(false);
+    }
   }
 
   return (
@@ -50,7 +121,8 @@ export function CartDrawer() {
         role="dialog"
         aria-modal="true"
         aria-label="Carrito de compras"
-        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-line bg-surface shadow-2xl transition-transform duration-300 ${
+        data-lenis-prevent
+        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col overflow-y-auto overscroll-contain border-l border-line bg-surface shadow-2xl transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -68,6 +140,8 @@ export function CartDrawer() {
           </button>
         </div>
 
+        <CartNotices notices={notices} />
+
         {lines.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="font-display text-4xl uppercase italic">Sin jugadas</p>
@@ -83,7 +157,7 @@ export function CartDrawer() {
         ) : (
           <>
             <CartPromo promo={promo} />
-            <div className="flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
+            <div className="min-h-56 flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
               <ul className="divide-y divide-line px-5">
                 {lines.map((item) => (
                   <li key={item.key} className="flex gap-4 py-4">
@@ -138,6 +212,21 @@ export function CartDrawer() {
                 ))}
               </ul>
 
+              <CartAddress
+                saved={savedAddress}
+                draft={addressDraft}
+                onDraftChange={setAddressDraft}
+                onSave={(next) => {
+                  addressStore.save(next);
+                  setAddressDraft(null);
+                }}
+                onClear={() => {
+                  addressStore.clear();
+                  setAddressDraft(null);
+                }}
+                shipping={order.shipping}
+              />
+
               {suggestions.length > 0 && (
                 <div className="border-t border-line px-5 py-4">
                   <p className="text-xs font-bold uppercase tracking-widest">Completá el look</p>
@@ -161,39 +250,62 @@ export function CartDrawer() {
             </div>
 
             <div className="space-y-4 border-t border-line px-5 py-5">
-              {promo.discount > 0 && (
-                <div className="space-y-1 text-sm">
+              <div className="space-y-1 text-sm">
+                {promo.discount > 0 && (
+                  <>
+                    <div className="flex justify-between text-muted">
+                      <span>Subtotal</span>
+                      <span className="tabular-nums">{formatPrice(promo.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-accent">
+                      <span>
+                        Promo {order.promoLabel} ({promo.freeUnits} gratis)
+                      </span>
+                      <span className="tabular-nums">−{formatPrice(promo.discount)}</span>
+                    </div>
+                  </>
+                )}
+                {order.shipping.status === "ok" && (
                   <div className="flex justify-between text-muted">
-                    <span>Subtotal</span>
-                    <span className="tabular-nums">{formatPrice(promo.subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-accent">
-                    <span>
-                      Promo {PROMO.label} ({promo.freeUnits} gratis)
+                    <span>Envío</span>
+                    <span className={`tabular-nums ${order.shipping.isFree ? "font-semibold text-whatsapp" : ""}`}>
+                      {order.shipping.isFree ? "Gratis" : formatPrice(order.shipping.cost)}
                     </span>
-                    <span className="tabular-nums">−{formatPrice(promo.discount)}</span>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-widest text-muted">Total</span>
-                <span className="font-display text-3xl tabular-nums">{formatPrice(total)}</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-muted">
+                  Total{order.shipping.status === "ok" ? "" : " (sin envío)"}
+                </span>
+                <span className="font-display text-3xl tabular-nums">{formatPrice(order.total)}</span>
               </div>
               <ul className="space-y-1.5 text-xs text-muted">
-                <li className="flex items-center gap-2">
-                  <TruckIcon className="size-4 text-accent" /> Envíos en CABA y Provincia de Bs. As. El costo se informa antes de confirmar.
-                </li>
+                {order.shipping.status === "unset" && (
+                  <li className="flex items-center gap-2">
+                    <TruckIcon className="size-4 text-accent" /> Elegí tu localidad arriba para ver el costo de envío.
+                  </li>
+                )}
                 <li className="flex items-center gap-2">
                   <CashIcon className="size-4 text-accent-2" /> Pagás recién cuando lo recibís. Cambio gratis 30 días.
                 </li>
               </ul>
+              {pending && (
+                <div className="rounded-xl border border-accent/40 bg-accent/10">
+                  <CartNotices
+                    notices={pending.notices}
+                    title={`Los precios cambiaron recién. Total actualizado: ${formatPrice(pending.order.total)}`}
+                  />
+                </div>
+              )}
               <button
                 type="button"
                 onClick={checkout}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-whatsapp py-4 text-sm font-bold uppercase tracking-widest text-black shadow-[0_0_30px_-8px_var(--whatsapp)] transition hover:brightness-110"
+                disabled={checking}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-whatsapp py-4 text-sm font-bold uppercase tracking-widest text-black shadow-[0_0_30px_-8px_var(--whatsapp)] transition hover:brightness-110 disabled:opacity-70"
               >
                 <WhatsAppIcon className="size-5" />
-                Comprar por WhatsApp
+                {checking ? "Verificando precios…" : pending ? "Confirmar y enviar" : "Comprar por WhatsApp"}
               </button>
               <p className="text-center text-[11px] leading-relaxed text-muted">
                 Al enviar el pedido aceptás los{" "}

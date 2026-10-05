@@ -6,6 +6,8 @@ import { Header } from "@/components/Header";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import { CartProvider } from "@/context/CartContext";
+import { CatalogProvider } from "@/context/CatalogContext";
+import { getCatalog } from "@/lib/catalog";
 import { PromoProvider } from "@/context/PromoContext";
 import { BUSINESS } from "@/data/business";
 import { JsonLd } from "@/components/JsonLd";
@@ -55,21 +57,25 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const catalog = await getCatalog();
+
   return (
     <html lang="es-AR" className={`${inter.variable} ${anton.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">
         <JsonLd data={SITE_JSON_LD} />
         <SmoothScroll>
-          <PromoProvider>
-            <CartProvider>
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-              <CartDrawer />
-              <WhatsAppFloat />
-            </CartProvider>
-          </PromoProvider>
+          <CatalogProvider catalog={catalog}>
+            <PromoProvider>
+              <CartProvider>
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer categories={catalog.categories} promotion={catalog.promotion} />
+                <CartDrawer />
+                <WhatsAppFloat />
+              </CartProvider>
+            </PromoProvider>
+          </CatalogProvider>
         </SmoothScroll>
       </body>
     </html>

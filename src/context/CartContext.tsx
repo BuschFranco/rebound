@@ -10,7 +10,8 @@ import {
   type ReactNode,
 } from "react";
 import { cartStore } from "@/lib/cartStore";
-import { getProductById } from "@/lib/products";
+import { validateCart, type CartNotice } from "@/lib/cartValidation";
+import { useCatalog } from "./CatalogContext";
 import { usePromo } from "./PromoContext";
 import { computePromo, type PromoSummary } from "@/lib/promo";
 import type { CartLine, Product } from "@/types";
@@ -18,8 +19,10 @@ import type { CartLine, Product } from "@/types";
 type CartContextValue = {
   /** Ítems del carrito con el producto y precio vigentes del catálogo. */
   lines: CartLine[];
+  /** Cambios desde la última vez que el cliente vio el carrito (precio distinto, producto que ya no está). */
+  notices: CartNotice[];
   count: number;
-  /** Total a pagar, con la promo aplicada. */
+  /** Total a pagar, con la promo aplicada (sin envío). */
   total: number;
   promo: PromoSummary;
   isOpen: boolean;
@@ -29,6 +32,8 @@ type CartContextValue = {
   updateQty: (key: string, quantity: number) => void;
   removeItem: (key: string) => void;
   clear: () => void;
+  /** Marca los avisos como vistos: actualiza precios "vistos" y saca lo que ya no existe. */
+  acknowledgeNotices: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -39,11 +44,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     cartStore.getSnapshot,
     cartStore.getServerSnapshot,
   );
-  const { active: promoActive } = usePromo();
+  const { products } = useCatalog();
+  const { promo: promotion } = usePromo();
   const [isOpen, setIsOpen] = useState(false);
 
+  const { lines, notices } = useMemo(() => validateCart(stored, products), [stored, products]);
+
+  const acknowledgeNotices = useCallback(() => {
+    if (notices.length > 0) cartStore.acknowledge(lines);
+  }, [notices.length, lines]);
+
   const open = useCallback(() => setIsOpen(true), []);
-  const close = useCallback(() => setIsOpen(false), []);
+  const close = useCallback(() => {
+    setIsOpen(false);
+    acknowledgeNotices();
+  }, [acknowledgeNotices]);
 
   const addItem = useCallback(
     (product: Product, size: string, color: string, quantity = 1) => {
@@ -53,6 +68,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         size,
         color,
         quantity,
+        name: product.name,
+        seenPrice: product.price,
       });
       setIsOpen(true);
     },
@@ -60,13 +77,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<CartContextValue>(() => {
-    const lines = stored.flatMap((item) => {
-      const product = getProductById(item.productId);
-      return product ? [{ ...item, product }] : [];
-    });
-    const promo = computePromo(lines, promoActive);
+    const promo = computePromo(lines, promotion);
     return {
       lines,
+      notices,
       count: promo.units,
       total: promo.total,
       promo,
@@ -77,8 +91,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       updateQty: cartStore.updateQty,
       removeItem: cartStore.remove,
       clear: cartStore.clear,
+      acknowledgeNotices,
     };
-  }, [stored, promoActive, isOpen, open, close, addItem]);
+  }, [lines, notices, promotion, isOpen, open, close, addItem, acknowledgeNotices]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

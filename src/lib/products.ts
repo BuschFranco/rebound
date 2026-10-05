@@ -1,56 +1,74 @@
-import { CATEGORIES, PRODUCTS } from "@/data/products";
-import type { Category, Product } from "@/types";
+import type { Category, CategoryInfo, Product } from "@/types";
 import { discountPercent } from "./format";
 
-export type SortOption = "relevancia" | "menor-precio" | "mayor-precio";
+/**
+ * Funciones puras sobre el catálogo. No tienen datos propios: reciben la lista de productos
+ * y categorías que viene de Supabase (en el servidor con getCatalog(), en el cliente con useCatalog()).
+ */
+
+/**
+ * Cuántos productos muestra como máximo cada fila deslizable (carrusel) antes de "Ver más".
+ * Vive acá y no en ProductCarousel porque las páginas del servidor no pueden importar valores de un componente cliente.
+ */
+export const CAROUSEL_MAX = 7;
+
+export type SortOption = "relevancia" | "nuevos" | "menor-precio" | "mayor-precio";
 
 const normalize = (text: string) =>
   text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
-export function getProducts() {
-  return PRODUCTS;
+export function getProductById(products: Product[], id: string) {
+  return products.find((p) => p.id === id);
 }
 
-export function getProductById(id: string) {
-  return PRODUCTS.find((p) => p.id === id);
+export function getProductBySlug(products: Product[], slug: string) {
+  return products.find((p) => p.slug === slug);
 }
 
-export function getProductBySlug(slug: string) {
-  return PRODUCTS.find((p) => p.slug === slug);
+export function getOnSale(products: Product[]) {
+  return products.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price);
 }
 
-export function getOnSale() {
-  return PRODUCTS.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price);
+/** Productos ordenados por fecha de publicación, el más reciente primero. */
+export function sortByNewest(products: Product[]) {
+  return [...products].sort((a, b) => b.publishedAt - a.publishedAt);
 }
 
-export function getNewArrivals() {
-  return PRODUCTS.filter((p) => p.isNew);
+/** "Drop nuevo": los últimos publicados (tengan o no la etiqueta "Nuevo", que dura NEW_PRODUCT_DAYS). */
+export function getLatestProducts(products: Product[], limit = 4) {
+  return sortByNewest(products).slice(0, limit);
 }
 
-export function getRelated(product: Product, limit = 4) {
-  return PRODUCTS.filter(
-    (p) => p.category === product.category && p.id !== product.id,
-  ).slice(0, limit);
+export function getRelated(products: Product[], product: Product, limit = 4) {
+  return products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, limit);
 }
 
-export function isCategory(value: string | undefined): value is Category {
-  return CATEGORIES.some((c) => c.slug === value);
+export function isCategory(categories: CategoryInfo[], value: string | undefined): value is Category {
+  return categories.some((c) => c.slug === value);
 }
 
-export function getCategoryLabel(slug: Category) {
-  return CATEGORIES.find((c) => c.slug === slug)?.label ?? slug;
+export function getCategoryLabel(categories: CategoryInfo[], slug: Category) {
+  return categories.find((c) => c.slug === slug)?.label ?? slug;
+}
+
+export function countByCategory(products: Product[]) {
+  const counts: Record<string, number> = {};
+  for (const p of products) counts[p.category] = (counts[p.category] ?? 0) + 1;
+  return counts;
 }
 
 export function filterProducts({
+  products,
+  categories,
   query,
   category,
   sort = "relevancia",
-  products = PRODUCTS,
 }: {
+  products: Product[];
+  categories: CategoryInfo[];
   query?: string;
   category?: Category;
   sort?: SortOption;
-  products?: Product[];
 }) {
   let result = products;
 
@@ -60,7 +78,7 @@ export function filterProducts({
     const terms = normalize(query).split(/\s+/).filter(Boolean);
     result = result.filter((p) => {
       const haystack = normalize(
-        `${p.name} ${p.description} ${getCategoryLabel(p.category)} ${p.colors
+        `${p.name} ${p.description} ${getCategoryLabel(categories, p.category)} ${p.colors
           .map((c) => c.name)
           .join(" ")}`,
       );
@@ -68,41 +86,42 @@ export function filterProducts({
     });
   }
 
+  if (sort === "nuevos") result = sortByNewest(result);
   if (sort === "menor-precio") result = [...result].sort((a, b) => a.price - b.price);
   if (sort === "mayor-precio") result = [...result].sort((a, b) => b.price - a.price);
 
   return result;
 }
 
-export function getMaxDiscount() {
-  return Math.max(0, ...getOnSale().map((p) => discountPercent(p.price, p.compareAtPrice)));
+export function getMaxDiscount(products: Product[]) {
+  return Math.max(0, ...getOnSale(products).map((p) => discountPercent(p.price, p.compareAtPrice)));
 }
 
-/** Qué categoría suele sumarse a cada una (para sugerir en el carrito). */
-const COMPLEMENTS: Record<Category, Category[]> = {
-  camisetas: ["shorts", "zapatillas", "accesorios"],
-  shorts: ["camisetas", "accesorios", "zapatillas"],
-  zapatillas: ["accesorios", "shorts", "camisetas"],
-  buzos: ["shorts", "camperas", "accesorios"],
-  camperas: ["buzos", "camisetas", "accesorios"],
-  accesorios: ["camisetas", "shorts", "zapatillas"],
-};
-
-/** Sugerencias para "Completá el look": productos de categorías complementarias que no están en el carrito. */
-export function getCartSuggestions(productIds: string[], limit = 3) {
+/**
+ * Sugerencias para "Completá el look": productos de las categorías complementarias
+ * (columna `complements` de cada categoría en la base) que no están en el carrito.
+ * Si una categoría no tiene complementarias cargadas, se sugieren novedades y el resto del catálogo.
+ */
+export function getCartSuggestions(
+  products: Product[],
+  categories: CategoryInfo[],
+  productIds: string[],
+  limit = 3,
+) {
+  const complementsOf = new Map(categories.map((c) => [c.slug, c.complements]));
   const inCart = new Set(productIds);
-  const cartProducts = PRODUCTS.filter((p) => inCart.has(p.id));
+  const cartProducts = products.filter((p) => inCart.has(p.id));
   const cartCategories = new Set(cartProducts.map((p) => p.category));
-  const complements = [...new Set(cartProducts.flatMap((p) => COMPLEMENTS[p.category]))];
+  const complements = [...new Set(cartProducts.flatMap((p) => complementsOf.get(p.category) ?? []))];
   // Primero lo que todavía no tiene; después el resto de las complementarias.
   const wanted = [
     ...complements.filter((c) => !cartCategories.has(c)),
     ...complements.filter((c) => cartCategories.has(c)),
   ];
   const ranked = [
-    ...wanted.flatMap((c) => PRODUCTS.filter((p) => p.category === c)),
-    ...PRODUCTS.filter((p) => p.isNew),
-    ...PRODUCTS,
+    ...wanted.flatMap((c) => products.filter((p) => p.category === c)),
+    ...products.filter((p) => p.isNew),
+    ...products,
   ];
   const seen = new Set<string>();
   const result: Product[] = [];
@@ -115,4 +134,62 @@ export function getCartSuggestions(productIds: string[], limit = 3) {
     if (result.length === limit) break;
   }
   return result;
+}
+
+/**
+ * "Basado en lo que viste": productos no vistos de las mismas categorías que lo visitado
+ * (y, con menos peso, de sus categorías complementarias). Lo visto más recientemente pesa más.
+ */
+export function getRecommendations(products: Product[], categories: CategoryInfo[], viewedIds: string[], limit = 4) {
+  const viewed = new Set(viewedIds);
+  const byId = new Map(products.map((p) => [p.id, p]));
+  const complementsOf = new Map(categories.map((c) => [c.slug, c.complements]));
+  const score = new Map<string, number>();
+
+  viewedIds.forEach((id, i) => {
+    const seen = byId.get(id);
+    if (!seen) return;
+    const weight = 1 / (i + 1);
+    const complements = new Set(complementsOf.get(seen.category) ?? []);
+    for (const p of products) {
+      if (viewed.has(p.id)) continue;
+      const points = p.category === seen.category ? 3 : complements.has(p.category) ? 1 : 0;
+      if (points) score.set(p.id, (score.get(p.id) ?? 0) + points * weight);
+    }
+  });
+
+  const ranked = products
+    .map((p, order) => ({ p, order, s: (score.get(p.id) ?? 0) + (p.isNew ? 0.05 : 0) }))
+    .filter((x) => score.has(x.p.id))
+    .sort((a, b) => b.s - a.s || a.order - b.order)
+    .map((x) => x.p);
+
+  // Variedad: como mucho la mitad de la sección de una misma categoría (si alcanzan los candidatos).
+  const maxPerCategory = Math.max(1, Math.ceil(limit / 2));
+  const perCategory = new Map<string, number>();
+  const picked: Product[] = [];
+  for (const p of ranked) {
+    if ((perCategory.get(p.category) ?? 0) >= maxPerCategory) continue;
+    perCategory.set(p.category, (perCategory.get(p.category) ?? 0) + 1);
+    picked.push(p);
+    if (picked.length === limit) return picked;
+  }
+  return [...picked, ...ranked.filter((p) => !picked.includes(p))].slice(0, limit);
+}
+
+/**
+ * Categorías ordenadas por interés del cliente: primero las que tienen más productos vistos
+ * (historial local). Ante empate, o sin historial, se respeta el orden de la base (`sort_order`).
+ */
+export function sortCategoriesByViews(categories: CategoryInfo[], products: Product[], viewedIds: string[]) {
+  const views = new Map<string, number>();
+  for (const id of viewedIds) {
+    const p = getProductById(products, id);
+    if (p) views.set(p.category, (views.get(p.category) ?? 0) + 1);
+  }
+  if (views.size === 0) return categories;
+  return categories
+    .map((c, order) => ({ c, order, n: views.get(c.slug) ?? 0 }))
+    .sort((a, b) => b.n - a.n || a.order - b.order)
+    .map((x) => x.c);
 }

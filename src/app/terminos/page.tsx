@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage } from "@/components/LegalPage";
-import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES, PROMO } from "@/data/business";
+import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES } from "@/data/business";
+import { getCatalog } from "@/lib/catalog";
+import { formatPromoValidity } from "@/lib/promo";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -10,7 +12,8 @@ export const metadata: Metadata = pageMetadata({
   path: "/terminos/",
 });
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const { promotion } = await getCatalog();
   return (
     <LegalPage title="Términos y condiciones" current="/terminos">
       <h2>1. Quiénes somos</h2>
@@ -50,14 +53,14 @@ export default function TermsPage() {
           Los descuentos de precio muestran tachado el precio de lista vigente antes de la rebaja y
           rigen mientras el producto permanezca publicado con ese precio.
         </li>
-        {PROMO.enabled && (
+        {promotion && (
           <li>
-            <strong>Promoción {PROMO.label}:</strong> por cada {PROMO.buy} unidades incluidas en un
-            mismo pedido, las {PROMO.buy - PROMO.pay} de menor precio no se cobran. Se combina entre
-            todos los productos, talles, colores y categorías, y también con los productos en oferta.
-            Vigencia: {POLICIES.promoValidity}; el plazo de {PROMO.durationDays} días corridos se registra en tu
-            navegador y se muestra con una cuenta regresiva junto a la promoción. El descuento se calcula sobre
-            los precios publicados y se muestra en el carrito y en el mensaje del pedido.
+            <strong>Promoción {promotion.label}:</strong> por cada {promotion.buy} unidades incluidas en
+            un mismo pedido, las {promotion.buy - promotion.pay} de menor precio no se cobran. Se combina
+            entre todos los productos, talles, colores y categorías, y también con los productos en oferta.
+            Vigencia: {formatPromoValidity(promotion)} (hora de Argentina), igual para todos los clientes.
+            El descuento se calcula sobre los precios publicados y se muestra en el carrito y en el
+            mensaje del pedido.
           </li>
         )}
         <li>

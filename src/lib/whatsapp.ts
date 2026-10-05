@@ -1,40 +1,64 @@
-import { PROMO } from "@/data/business";
-import type { CartLine } from "@/types";
 import { formatPrice } from "./format";
-import { computePromo } from "./promo";
+import type { SavedAddress } from "@/types";
+import type { Order } from "./order";
+import { formatLocation, formatStreetAddress } from "./shipping";
 
 export const WHATSAPP_NUMBER = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, "");
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 
-export function buildOrderMessage(cartLines: CartLine[], promoActive: boolean, siteUrl = SITE_URL) {
-  const promo = computePromo(cartLines, promoActive);
-  const lines = cartLines.map((line, i) => {
-    const subtotal = formatPrice(line.product.price * line.quantity);
-    return [
-      `${i + 1}. *${line.product.name}*`,
+/**
+ * Mensaje del pedido a partir del pedido ya verificado contra la base (precios y envío vigentes)
+ * y la dirección que el cliente cargó en el carrito (opcional: si falta, queda para completar en el chat).
+ */
+export function buildOrderMessage(order: Order, address: SavedAddress | null, siteUrl = SITE_URL) {
+  const items = order.lines.map((line, i) =>
+    [
+      `${i + 1}. *${line.name}*`,
       `   Talle: ${line.size} | Color: ${line.color} | Cantidad: ${line.quantity}`,
-      `   Subtotal: ${subtotal}`,
-      `   ${siteUrl}/producto/${line.product.slug}`,
-    ].join("\n");
-  });
+      `   Subtotal: ${formatPrice(line.price * line.quantity)}`,
+      `   ${siteUrl}/producto/${line.slug}`,
+    ].join("\n"),
+  );
+
+  const { promo, shipping } = order;
+  const shippingLines =
+    shipping.status === "ok"
+      ? [
+          `Envío a ${formatLocation(shipping.location)}: ${shipping.isFree ? "GRATIS" : formatPrice(shipping.cost)} (${shipping.eta})`,
+          `*Total: ${formatPrice(order.total)}*`,
+        ]
+      : shipping.status === "out-of-zone"
+        ? [
+            `*Total productos: ${formatPrice(order.total)}*`,
+            `Localidad: ${formatLocation(shipping.location)} (fuera de las zonas de envío; ¿pueden enviar igual?)`,
+          ]
+        : [`*Total: ${formatPrice(order.total)}* (sin envío)`];
+
+  const street = address ? formatStreetAddress(address) : "";
+  // La localidad ya aparece en la línea de envío; solo se pide si todavía no se eligió.
+  const deliveryLines = [
+    street ? `📍 *Entrega:* ${street}` : "Dirección: ",
+    shipping.status === "unset" ? "Localidad (CABA o Provincia de Bs. As.): " : "",
+    address?.notes ? `Referencias: ${address.notes}` : "",
+    `${address?.recipient ? "Recibe" : "Nombre"}: ${address?.recipient ?? ""}`,
+  ].filter((l) => l !== "");
 
   return [
     "¡Hola! 👋 Quiero comprar estos productos:",
     "",
-    lines.join("\n\n"),
+    items.join("\n\n"),
     "",
     ...(promo.discount > 0
       ? [
           `Subtotal: ${formatPrice(promo.subtotal)}`,
-          `Promo ${PROMO.label} (${promo.freeUnits} gratis): -${formatPrice(promo.discount)}`,
+          `Promo ${order.promoLabel ?? ""} (${promo.freeUnits} gratis): -${formatPrice(promo.discount)}`,
         ]
       : []),
-    `*Total: ${formatPrice(promo.total)}* (sin envío)`,
+    ...shippingLines,
     "",
-    "Nombre: ",
-    "Localidad de entrega (CABA o Provincia de Bs. As.): ",
+    ...deliveryLines,
     "",
-    "Quisiera coordinar el envío. Pago al recibir. ¡Gracias!",
+    "Pago al recibir. ¡Gracias!",
   ].join("\n");
 }
 

@@ -1,39 +1,49 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
-import { PROMO } from "@/data/business";
-import { promoClock } from "@/lib/promoClock";
+import { isPromoRunning } from "@/lib/promo";
+import type { Promotion } from "@/types";
+import { useCatalog } from "./CatalogContext";
 
 type PromoState = {
-  /** Si la promo vale ahora. Antes de conocer el reloj del visitante (HTML estático) se asume activa. */
+  /** La promo vigente ahora (null si no hay, no empezó o venció). */
+  promo: Promotion | null;
   active: boolean;
-  /** Ya se leyó el reloj del navegador: recién ahí se puede mostrar la cuenta regresiva. */
+  /** Ya se leyó el reloj del navegador: recién ahí se muestra la cuenta regresiva. */
   ready: boolean;
   msLeft: number;
 };
 
 const PromoContext = createContext<PromoState | null>(null);
 
-const DURATION_MS = PROMO.durationDays * 24 * 60 * 60 * 1000;
+const noopSubscribe = () => () => {};
 
+/**
+ * Promo de la base (tabla `promotions`) con fechas fijas, iguales para todos.
+ * El HTML sale del servidor (cacheado), así que la vigencia exacta y la cuenta regresiva
+ * se calculan con el reloj del navegador; antes de hidratar se asume la que mandó el servidor.
+ */
 export function PromoProvider({ children }: { children: ReactNode }) {
-  const start = useSyncExternalStore(promoClock.subscribe, promoClock.getSnapshot, promoClock.getServerSnapshot);
+  const { promotion } = useCatalog();
+  const ready = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const [now, setNow] = useState(() => Date.now());
 
-  const endsAt = start === null ? null : start + DURATION_MS;
-  const running = PROMO.enabled && endsAt !== null && endsAt > now;
-
+  const ended = promotion !== null && ready && now >= promotion.endsAt;
   useEffect(() => {
-    if (!running) return;
+    if (!promotion || ended) return;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
-  }, [running]);
+  }, [promotion, ended]);
 
   const value = useMemo<PromoState>(() => {
-    const ready = endsAt !== null;
-    const msLeft = ready ? Math.max(0, endsAt - now) : DURATION_MS;
-    return { active: PROMO.enabled && (!ready || msLeft > 0), ready, msLeft };
-  }, [endsAt, now]);
+    const active = ready ? isPromoRunning(promotion, now) : promotion !== null;
+    return {
+      promo: active ? promotion : null,
+      active,
+      ready,
+      msLeft: active && ready && promotion ? Math.max(0, promotion.endsAt - now) : 0,
+    };
+  }, [promotion, ready, now]);
 
   return <PromoContext.Provider value={value}>{children}</PromoContext.Provider>;
 }

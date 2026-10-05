@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { BUSINESS, POLICIES } from "@/data/business";
+import { getCatalog } from "@/lib/catalog";
+import { formatPrice } from "@/lib/format";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -9,7 +11,9 @@ export const metadata: Metadata = pageMetadata({
   path: "/envios/",
 });
 
-export default function ShippingPage() {
+export default async function ShippingPage() {
+  const { shippingZones } = await getCatalog();
+
   return (
     <LegalPage title="Envíos y pagos" eyebrow="Entregas" current="/envios">
       <h2>Zonas de entrega</h2>
@@ -25,9 +29,37 @@ export default function ShippingPage() {
 
       <h2>Costo y plazo de entrega</h2>
       <p>
-        El costo de envío depende de tu localidad. Te lo informamos por WhatsApp, junto con la
-        fecha estimada de entrega, <strong>antes de que confirmes la compra</strong>. No hay cargos
-        ocultos: el total que confirmás es el total que pagás al recibir.
+        El costo depende de la zona. En el carrito elegís tu localidad (o tocás &ldquo;Usar mi
+        ubicación&rdquo;) y te mostramos el envío y el total <strong>antes de que confirmes la
+        compra</strong>. No hay cargos ocultos: el total que confirmás es el total que pagás al recibir.
+      </p>
+      <div className="not-prose my-6 overflow-x-auto rounded-xl border border-line">
+        <table className="w-full min-w-[28rem] text-left text-sm">
+          <thead className="bg-surface text-xs uppercase tracking-widest text-ink">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Zona</th>
+              <th className="px-4 py-3 font-semibold">Envío</th>
+              <th className="px-4 py-3 font-semibold">Plazo</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {shippingZones.map((z) => (
+              <tr key={z.id}>
+                <td className="px-4 py-3 font-semibold text-ink">{z.name}</td>
+                <td className="px-4 py-3 tabular-nums">
+                  {formatPrice(z.price)}
+                  {z.freeFrom !== null && (
+                    <span className="block text-xs text-whatsapp">Gratis desde {formatPrice(z.freeFrom)}</span>
+                  )}
+                </td>
+                <td className="px-4 py-3">{z.eta}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-sm">
+        El envío gratis se calcula sobre el total de productos con las promociones aplicadas.
       </p>
 
       <h2>Pago al recibir</h2>

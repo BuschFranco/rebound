@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Category } from "@/types";
+import type { SizeGuideKind } from "@/types";
 import { CloseIcon } from "./icons";
 
 const APPAREL = [
@@ -22,12 +22,6 @@ const SHOES = [
   { size: "45", cm: 29.5 },
 ];
 
-const APPAREL_CATEGORIES: Category[] = ["camisetas", "shorts", "buzos", "camperas"];
-
-export function hasSizeGuide(category: Category) {
-  return category === "zapatillas" || APPAREL_CATEGORIES.includes(category);
-}
-
 function recommendApparel(height: number, weight: number) {
   const byHeight = APPAREL.findIndex((r) => height <= r.maxHeight);
   const byWeight = APPAREL.findIndex((r) => weight <= r.maxWeight);
@@ -42,20 +36,21 @@ function recommendShoe(footCm: number) {
 const FIELD =
   "w-full rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25";
 
+/** `kind` sale de la columna `size_guide` de la categoría en la base (ropa, calzado o ninguna). */
 export function SizeGuide({
-  category,
+  kind,
   onPick,
 }: {
-  category: Category;
+  kind: SizeGuideKind;
   onPick: (size: string) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [foot, setFoot] = useState("");
-  const isShoe = category === "zapatillas";
+  const isShoe = kind === "shoes";
 
-  if (!hasSizeGuide(category)) return null;
+  if (kind === "none") return null;
 
   const h = Number(height);
   const w = Number(weight);
@@ -131,7 +126,7 @@ export function SizeGuide({
             </div>
             <div aria-live="polite" className="mt-4 min-h-12">
               {recommended ? (
-                <div className="flex items-center justify-between gap-3 rounded-lg bg-gradient-brand px-4 py-3">
+                <div className="flex items-center justify-between gap-3 rounded-lg bg-accent-2 px-4 py-3">
                   <p className="text-sm font-semibold text-white">
                     Te recomendamos talle <span className="font-display text-2xl italic">{recommended}</span>
                   </p>

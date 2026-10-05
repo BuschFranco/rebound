@@ -1,11 +1,12 @@
 "use client";
 
+import { useLenis } from "lenis/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useState, type MouseEvent } from "react";
 import { usePromo } from "@/context/PromoContext";
-import { POLICIES, PROMO } from "@/data/business";
-import { CATEGORIES } from "@/data/products";
+import { POLICIES } from "@/data/business";
+import { useOrderedCategories } from "@/context/CatalogContext";
 import { CartButton } from "./CartButton";
 import { CatalogMenu } from "./CatalogMenu";
 import { Logo } from "./Logo";
@@ -23,14 +24,25 @@ const NAV = [
 export function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { active: promoActive } = usePromo();
+  const { promo: promotion } = usePromo();
+  const categories = useOrderedCategories();
+  const lenis = useLenis();
+
+  /** Inicio y logo: si ya estás en la home, en vez de "navegar" a la misma página, vuelve suave arriba. */
+  function onHomeClick(e: MouseEvent<HTMLAnchorElement>) {
+    setMenuOpen(false);
+    if (pathname !== "/") return;
+    e.preventDefault();
+    if (lenis) lenis.scrollTo(0);
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-background/80 backdrop-blur-xl">
-      <div className="bg-gradient-brand px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
-        {promoActive && (
+      <div className="bg-accent-2 px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
+        {promotion && (
           <>
-            {PROMO.label} en toda la web · <PromoCountdown className="gap-1" /> ·{" "}
+            {promotion.label} en toda la web · <PromoCountdown className="gap-1" /> ·{" "}
           </>
         )}
         Pagás al recibir · Envíos en CABA y PBA · Cambio gratis {POLICIES.exchangeDays} días
@@ -46,7 +58,7 @@ export function Header() {
           {menuOpen ? <CloseIcon className="size-6" /> : <MenuIcon className="size-6" />}
         </button>
 
-        <Link href="/" aria-label="REBOUND, ir al inicio" onClick={() => setMenuOpen(false)}>
+        <Link href="/" aria-label="REBOUND, ir al inicio" onClick={onHomeClick}>
           <Logo />
         </Link>
 
@@ -60,7 +72,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-full bg-gradient-brand px-3 py-1 text-xs font-bold uppercase tracking-widest text-white transition hover:brightness-110"
+                className="rounded-full bg-accent-2 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white transition hover:brightness-110"
               >
                 {item.label}
               </Link>
@@ -68,6 +80,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={item.href === "/" ? onHomeClick : undefined}
                 className={`relative text-xs font-semibold uppercase tracking-widest transition hover:text-ink ${
                   active ? "text-ink" : "text-muted"
                 } after:absolute after:-bottom-1.5 after:left-0 after:h-0.5 after:bg-accent after:transition-all ${
@@ -103,14 +116,14 @@ export function Header() {
             <div key={item.href}>
               <Link
                 href={item.href}
-                onClick={() => setMenuOpen(false)}
+                onClick={item.href === "/" ? onHomeClick : () => setMenuOpen(false)}
                 className={`block py-3 font-display text-2xl uppercase italic ${item.hot ? "text-accent" : ""}`}
               >
                 {item.label}
               </Link>
               {item.href === "/catalogo" && (
                 <ul className="-mt-1 mb-2 grid grid-cols-2 gap-2">
-                  {CATEGORIES.map((c) => (
+                  {categories.map((c) => (
                     <li key={c.slug}>
                       <Link
                         href={`/catalogo?categoria=${c.slug}`}

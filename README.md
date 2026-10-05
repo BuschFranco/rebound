@@ -1,14 +1,55 @@
 # REBOUND — basketball store con compra por WhatsApp
 
-Tienda de indumentaria y zapatillas de basket hecha con Next.js 16 (App Router, Tailwind CSS 4). Estética oscura con acentos naranja/morado. El cliente arma su carrito (talle, color y cantidad) y al tocar **Comprar por WhatsApp** se abre un chat con el pedido ya escrito. El envío se coordina por chat y se paga al recibir.
+Tienda de indumentaria y zapatillas de basket hecha con Next.js 16 (App Router, Tailwind CSS 4) y **Supabase** (PostgreSQL) como base de datos del catálogo. Estética oscura con acentos naranja/morado. El cliente arma su carrito (talle, color y cantidad) y al tocar **Comprar por WhatsApp** se abre un chat con el pedido ya escrito. El envío se coordina por chat y se paga al recibir.
 
 ## Puesta en marcha
 
+Requisitos: Node 22 y Docker (para la base local).
+
 ```bash
 npm install
-cp .env.local.example .env.local   # y completá tu número
+cp .env.local.example .env.local   # y completá tu número de WhatsApp
+npm run db:start                   # levanta Supabase en Docker y carga los productos de ejemplo
 npm run dev
 ```
+
+- Sitio: http://localhost:3000
+- Panel de la base (Supabase Studio): http://127.0.0.1:54323 → **Table Editor** para editar productos y categorías.
+
+### Comandos de la base
+
+| Comando | Qué hace |
+| --- | --- |
+| `npm run db:start` | Levanta Supabase en Docker (la primera vez descarga las imágenes). |
+| `npm run db:stop` | Apaga los contenedores (los datos se conservan). |
+| `npm run db:reset` | Borra la base local y la vuelve a crear con `supabase/migrations` + `supabase/seed.sql`. |
+| `npm run db:types` | Regenera `src/lib/database.types.ts` después de cambiar las tablas. |
+
+### Cómo funciona el catálogo
+
+- Tablas `categories` y `products` (ver `supabase/migrations/`). Para ocultar un producto sin borrarlo: `active = false`. La fecha de publicación (`published_at`) define si se muestra como "Nuevo".
+- El sitio lee con la clave **publishable**: las políticas RLS solo permiten *leer* productos activos y categorías. Las altas y cambios se hacen desde Studio.
+- `src/lib/catalog.ts` trae el catálogo en el servidor. Next.js lo cachea y lo vuelve a consultar **como máximo cada 60 s**; los componentes del navegador lo reciben por `CatalogContext`.
+- Para ver un cambio al instante: `POST /api/revalidate/` con el header `x-revalidate-secret: <REVALIDATE_SECRET>`. En producción conviene automatizarlo con un *Database Webhook* de Supabase (ver Deploy).
+
+### Promociones y reglas de categorías
+
+- **Promo por cantidad** (tabla `promotions`): `label` ("3x2"), `buy` / `pay` (por cada 3 pagás 2), `starts_at` / `ends_at` (fechas fijas, iguales para todos) y `active`. El sitio usa la promo vigente o la próxima a empezar: barra superior, hero, tarjetas, ficha, carrito, mensaje de WhatsApp, cuenta regresiva y Términos y condiciones salen de ahí. Para cambiarla, editá la fila en Studio (o creá otra) y llamá a `/api/revalidate/`. El descuento lo calcula siempre el servidor con la hora actual al comprar.
+- **Productos en oferta:** precio anterior en `products.compare_at_price`.
+- **"Nuevo":** se calcula solo con `products.published_at`: un producto es nuevo durante 45 días desde que se publica (`NEW_PRODUCT_DAYS` en `src/data/business.ts`). Aparece la etiqueta "Nuevo". La sección "Drop nuevo" de la home muestra siempre los 4 últimos publicados (y el catálogo tiene el orden "Más nuevos").
+- **Categorías** (`categories`): además de nombre, imagen y orden, `size_guide` (`apparel` = guía por altura/peso, `shoes` = por largo de pie, `none` = sin guía) y `complements` (qué categorías sugerir en "Completá el look").
+
+### Envíos por zona
+
+- Tablas `shipping_zones` (nombre, precio, envío gratis desde, plazo) y `shipping_zone_areas` (qué partidos/comunas cubre cada zona, con los ids oficiales de [Georef](https://apis.datos.gob.ar/georef)). Una zona puede cubrir una provincia entera (`departamento_id` vacío) o un partido puntual; gana el partido.
+- Los precios del seed son **de ejemplo**: ajustalos en Studio → `shipping_zones`. La página `/envios` muestra la tabla automáticamente.
+- En el carrito, la primera sección **Dirección de entrega** tiene la localidad (sugerencias de Georef vía `/api/localidades/` o "Usar mi ubicación" vía `/api/ubicacion/`) y, opcionalmente, calle, número, piso/depto, CP, referencias y quién recibe. Con **Guardar** queda en el `localStorage` (`rebound-address-v1`), no en cookie: el servidor no la necesita. Si está cargada, va completa en el mensaje de WhatsApp; si no, queda para completar en el chat.
+
+### Carrito sin registro
+
+- Se guarda en el `localStorage` del navegador (`rebound-cart-v3`): producto, talle, color, cantidad y el precio que vio el cliente. Se sincroniza entre pestañas y se descarta si no se usa durante 30 días.
+- Precio, nombre y disponibilidad salen siempre de la base. Si un precio cambió o un producto/talle/color ya no existe, el carrito lo avisa ("subió de $X a $Y", "sacamos X porque ya no está disponible") y se actualiza al cerrarlo.
+- Al tocar **Comprar por WhatsApp**, `/api/cart/quote/` vuelve a leer productos y zonas de la base **sin caché**. Si algo cambió desde que se cargó la página, muestra el total actualizado y pide confirmar antes de abrir WhatsApp.
 
 ## Configuración (`.env.local`)
 
@@ -16,14 +57,17 @@ npm run dev
 | --- | --- |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Número que recibe los pedidos, formato internacional sin `+` (ej. `5491112345678`). |
 | `NEXT_PUBLIC_SITE_URL` | URL pública del sitio; se usa para los links a cada producto dentro del mensaje. Si está vacía, se usa el dominio actual. |
+| `SUPABASE_URL` | URL de Supabase (local: `http://127.0.0.1:54321`). |
+| `SUPABASE_PUBLISHABLE_KEY` | Clave publishable de Supabase (solo lectura gracias a RLS). Local: la muestra `npx supabase status`. |
+| `REVALIDATE_SECRET` | Clave para `/api/revalidate/`. Larga y aleatoria. |
 
 ## Dónde tocar
 
-- **Productos y categorías:** `src/data/products.ts`
+- **Productos y categorías:** en la base (Supabase Studio → Table Editor). Datos iniciales: `supabase/seed.sql`; estructura: `supabase/migrations/`
 - **Texto del mensaje de WhatsApp:** `src/lib/whatsapp.ts`
 - **Colores (tokens), gradiente de marca y tipografías (Anton + Inter):** `src/app/globals.css` y `src/app/layout.tsx`
 - **Logo e isotipo:** `src/components/Logo.tsx` (usa `src/app/logo.png`) y el favicon `src/app/icon.png`
-- **Imágenes del hero y banner:** `HERO_IMAGE` / `BANNER_IMAGE` en `src/data/products.ts`
+- **Imágenes del hero y banner:** `HERO_IMAGE` / `BANNER_IMAGE` en `src/data/site.ts`
 - **Carrito (persistido en `localStorage`):** `src/lib/cartStore.ts` + `src/context/CartContext.tsx`
 
 ## Páginas
@@ -45,15 +89,24 @@ Páginas incluidas: `/terminos`, `/privacidad`, `/cambios-y-devoluciones`, `/env
 | Identificación del proveedor (razón social, CUIT, domicilio, contacto) | Ley 24.240 · Res. 21/2004 | ⚠️ Completar en `business.ts` |
 | QR de Data Fiscal (Formulario 960/D) | ARCA | ⚠️ Generarlo en ARCA y cargar link + imagen en `business.ts` |
 | Política de privacidad y leyenda de la AAIP | Ley 25.326 · Disp. 10/2008 | ✅ `/privacidad` |
-| Precios finales en pesos con IVA incluido, vigencia de promociones | Ley 24.240 art. 7 · Ley 22.802 | ✅ (la promo 3x2 dura 14 días desde el primer ingreso de cada visitante; ver `PROMO.durationDays` en `business.ts`) |
+| Precios finales en pesos con IVA incluido, vigencia de promociones | Ley 24.240 art. 7 · Ley 22.802 | ✅ (la promo tiene fechas fijas iguales para todos: tabla `promotions`) |
 | IVA contenido discriminado en la factura | Ley 27.743 (Transparencia Fiscal) | ⚠️ Se cumple en el comprobante que emitís, no en la web |
 
 Antes de lanzar también conviene: inscripción en ARCA (monotributo o RI) e Ingresos Brutos (ARBA/AGIP), registrar la marca en el INPI, inscribir la base de datos de clientes ante la AAIP, reemplazar las fotos de ejemplo por fotos propias y hacer revisar los textos legales por un abogado.
 
-## Deploy (GitHub Pages)
+## Deploy (Netlify + Supabase)
 
-Cada push a `main` compila el sitio como estático (`output: "export"`) y lo publica con GitHub Actions (`.github/workflows/deploy.yml`) en `https://<usuario>.github.io/rebound/`.
+El plan gratis de Netlify permite sitios comerciales y corre Next.js con servidor (ISR, imágenes y `/api/revalidate`).
 
-- El número de WhatsApp se toma de la variable del repo **`WHATSAPP_NUMBER`** (Settings → Secrets and variables → Actions → Variables).
-- El catálogo filtra en el navegador y las imágenes se redimensionan vía Unsplash (`src/lib/imageLoader.ts`), porque GitHub Pages no tiene servidor.
-- Para probar el build estático en local: `NEXT_PUBLIC_BASE_PATH=/rebound npm run build` y servir la carpeta `out/` bajo `/rebound/`.
+1. **Base en la nube:** creá un proyecto gratis en [supabase.com](https://supabase.com) y subí las tablas y datos:
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <tu-project-ref>
+   npx supabase db push            # crea las tablas (migrations)
+   ```
+   Para cargar los productos de ejemplo, pegá el contenido de `supabase/seed.sql` en el **SQL Editor** del proyecto.
+2. **Sitio:** en [netlify.com](https://netlify.com) → *Add new site → Import from Git* → elegí este repo. Netlify detecta Next.js solo (`netlify.toml`).
+3. **Variables** (*Site configuration → Environment variables*): `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (de *Project Settings → API Keys* en Supabase), `REVALIDATE_SECRET`, `NEXT_PUBLIC_WHATSAPP_NUMBER` y `NEXT_PUBLIC_SITE_URL` (la URL de Netlify o tu dominio).
+4. **Cambios al instante (opcional):** en Supabase → *Database → Webhooks*, creá uno para `INSERT`, `UPDATE` y `DELETE` en `products` y `categories` que haga `POST` a `https://<tu-sitio>/api/revalidate/` con el header `x-revalidate-secret`. Sin webhook, los cambios igual aparecen en hasta 1 minuto.
+
+Cada push a `main` vuelve a publicar el sitio.

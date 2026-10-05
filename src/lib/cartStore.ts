@@ -1,36 +1,63 @@
-import type { CartItem } from "@/types";
-import { getProductById } from "./products";
+import type { CartItem, CartLine } from "@/types";
 
-const STORAGE_KEY = "rebound-cart-v2";
-/** Versión anterior: guardaba también precio y nombre, que quedaban desactualizados. */
-const LEGACY_KEY = "rebound-cart-v1";
+/**
+ * Carrito persistente sin registro, guardado en el localStorage del navegador.
+ * Solo guarda qué eligió el cliente (producto, talle, color, cantidad) más el nombre y precio que vio,
+ * para poder avisarle si algo cambió. Precio, nombre y disponibilidad reales salen siempre del
+ * catálogo de la base (ver cartValidation.ts). Se sincroniza entre pestañas.
+ */
+const STORAGE_KEY = "rebound-cart-v3";
+/** Versiones anteriores (array de ítems sin fecha). Se migran al leer. */
+const LEGACY_KEYS = ["rebound-cart-v2", "rebound-cart-v1"];
+/** Un carrito sin cambios durante este tiempo se descarta (precios y stock ya no serían los mismos). */
+const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const EMPTY: CartItem[] = [];
+
+type Stored = { version: 3; updatedAt: number; items: unknown };
 
 let items: CartItem[] | null = null;
 const listeners = new Set<() => void>();
 
-/** Se queda solo con lo que sigue existiendo en el catálogo (producto, talle y color). */
-function sanitize(parsed: unknown): CartItem[] {
+/** Valida la forma de lo guardado y une duplicados (también lo usa el servidor al cotizar). */
+export function sanitizeCartItems(parsed: unknown): CartItem[] {
   if (!Array.isArray(parsed)) return EMPTY;
   const byKey = new Map<string, CartItem>();
   for (const raw of parsed) {
     if (typeof raw !== "object" || raw === null) continue;
-    const { productId, size, color, quantity } = raw as Partial<CartItem>;
+    const { productId, size, color, quantity, name, seenPrice } = raw as Partial<CartItem>;
     if (typeof productId !== "string" || typeof size !== "string" || typeof color !== "string") continue;
     if (typeof quantity !== "number" || !Number.isFinite(quantity) || quantity <= 0) continue;
-    const product = getProductById(productId);
-    if (!product || !product.sizes.includes(size) || !product.colors.some((c) => c.name === color)) continue;
     const key = `${productId}__${size}__${color}`;
     const prev = byKey.get(key);
-    byKey.set(key, { key, productId, size, color, quantity: (prev?.quantity ?? 0) + Math.floor(quantity) });
+    byKey.set(key, {
+      key,
+      productId,
+      size,
+      color,
+      quantity: Math.min(99, (prev?.quantity ?? 0) + Math.floor(quantity)),
+      ...(typeof name === "string" ? { name } : {}),
+      ...(typeof seenPrice === "number" && Number.isFinite(seenPrice) ? { seenPrice } : {}),
+    });
   }
   return [...byKey.values()];
 }
 
 function read(): CartItem[] {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_KEY);
-    return raw ? sanitize(JSON.parse(raw)) : EMPTY;
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const stored = JSON.parse(raw) as Partial<Stored>;
+      if (typeof stored.updatedAt !== "number" || Date.now() - stored.updatedAt > MAX_AGE_MS) {
+        window.localStorage.removeItem(STORAGE_KEY);
+        return EMPTY;
+      }
+      return sanitizeCartItems(stored.items);
+    }
+    for (const legacyKey of LEGACY_KEYS) {
+      const legacy = window.localStorage.getItem(legacyKey);
+      if (legacy) return sanitizeCartItems(JSON.parse(legacy));
+    }
+    return EMPTY;
   } catch {
     return EMPTY;
   }
@@ -39,10 +66,11 @@ function read(): CartItem[] {
 function write(next: CartItem[]) {
   items = next;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    window.localStorage.removeItem(LEGACY_KEY);
+    const stored: Stored = { version: 3, updatedAt: Date.now(), items: next };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+    LEGACY_KEYS.forEach((k) => window.localStorage.removeItem(k));
   } catch {
-    // Storage unavailable (private mode, blocked): the cart still works in memory.
+    // Storage no disponible (modo privado, bloqueado): el carrito igual funciona en memoria.
   }
   listeners.forEach((l) => l());
 }
@@ -74,7 +102,11 @@ export const cartStore = {
     const existing = current.find((i) => i.key === item.key);
     write(
       existing
-        ? current.map((i) => (i.key === item.key ? { ...i, quantity: i.quantity + item.quantity } : i))
+        ? current.map((i) =>
+            i.key === item.key
+              ? { ...i, name: item.name, seenPrice: item.seenPrice, quantity: Math.min(99, i.quantity + item.quantity) }
+              : i,
+          )
         : [...current, item],
     );
   },
@@ -83,7 +115,7 @@ export const cartStore = {
     write(
       quantity <= 0
         ? current.filter((i) => i.key !== key)
-        : current.map((i) => (i.key === key ? { ...i, quantity } : i)),
+        : current.map((i) => (i.key === key ? { ...i, quantity: Math.min(99, quantity) } : i)),
     );
   },
   remove(key: string) {
@@ -91,5 +123,19 @@ export const cartStore = {
   },
   clear() {
     write(EMPTY);
+  },
+  /**
+   * El cliente ya vio los avisos: el carrito queda solo con lo vigente
+   * y con el precio y nombre actuales como "vistos".
+   */
+  acknowledge(validLines: CartLine[]) {
+    const byKey = new Map(validLines.map((l) => [l.key, l]));
+    const next = cartStore
+      .getSnapshot()
+      .flatMap((i) => {
+        const line = byKey.get(i.key);
+        return line ? [{ ...i, name: line.product.name, seenPrice: line.product.price }] : [];
+      });
+    write(next);
   },
 };

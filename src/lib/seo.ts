@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { BUSINESS } from "@/data/business";
-import { HERO_IMAGE } from "@/data/products";
+import { HERO_IMAGE } from "@/data/site";
 import { absoluteUrl } from "./site";
 
 export const SITE_DESCRIPTION =

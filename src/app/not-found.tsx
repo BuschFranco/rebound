@@ -8,7 +8,7 @@ export default function NotFound() {
     <div className="bg-glow">
       <div className="mx-auto max-w-xl px-4 py-32 text-center">
         <p className="text-xs font-bold uppercase tracking-[0.35em] text-accent">Error 404</p>
-        <h1 className="text-gradient mt-3 font-display text-8xl uppercase italic leading-none sm:text-9xl">
+        <h1 className="mt-3 text-accent font-display text-8xl uppercase italic leading-none sm:text-9xl">
           Airball
         </h1>
         <p className="mt-6 text-muted">

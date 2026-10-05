@@ -1,0 +1,9 @@
+# Netlify detecta Next.js y usa su adaptador automáticamente (server rendering, ISR e imágenes).
+# Las variables de entorno (Supabase, WhatsApp, URL del sitio) se cargan en el panel de Netlify:
+# Site configuration → Environment variables. Ver README.
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"

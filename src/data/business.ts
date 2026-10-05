@@ -30,25 +30,14 @@ export const POLICIES = {
   shippingAreas: ["Ciudad Autónoma de Buenos Aires (CABA)", "Provincia de Buenos Aires"],
   shippingAreasShort: "CABA y Provincia de Buenos Aires",
   paymentMethods: ["Efectivo", "Transferencia bancaria"],
-  /** Vigencia de las promociones (Ley 22.802 de Lealtad Comercial / Ley 24.240 art. 7): se cuenta desde el primer ingreso de cada visitante (ver PROMO.durationDays). */
-  promoValidity: "14 días desde tu primer ingreso al sitio",
   /** Fecha de última actualización de los textos legales. */
   lastUpdated: "5 de octubre de 2026",
 } as const;
 
-/**
- * Promo por cantidad: cada `buy` unidades, pagás `pay` (la de menor precio sale gratis).
- * Se combina entre productos, talles, colores y categorías. Poné `enabled: false` para desactivarla.
- * Dura `durationDays` días desde el primer ingreso de cada visitante (se guarda en su navegador);
- * pasado ese plazo la promo se apaga para él (ver src/context/PromoContext.tsx).
- */
-export const PROMO = {
-  enabled: true,
-  buy: 3,
-  pay: 2,
-  label: "3x2",
-  durationDays: 14,
-} as const;
+/** La promoción (NxM, etiqueta y fechas de vigencia) vive en la tabla `promotions` de Supabase. */
+
+/** Un producto se muestra como "Nuevo" durante estos días desde su `published_at` (1 mes y medio). */
+export const NEW_PRODUCT_DAYS = 45;
 
 /**
  * Plazo estimado de entrega en CABA y Provincia de Buenos Aires, en días hábiles.

@@ -2,22 +2,28 @@
 
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { useCatalog } from "@/context/CatalogContext";
 import type { Product } from "@/types";
 import { QuantityPromoHint } from "./QuantityPromoHint";
 import { SizeGuide } from "./SizeGuide";
 
 export function ProductPurchase({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const { categories } = useCatalog();
+  const sizeGuide = categories.find((c) => c.slug === product.category)?.sizeGuide ?? "none";
   const [size, setSize] = useState(product.sizes.length === 1 ? product.sizes[0] : "");
   const [color, setColor] = useState(product.colors.length === 1 ? product.colors[0].name : "");
   const [quantity, setQuantity] = useState(1);
   const [showErrors, setShowErrors] = useState(false);
+  // Cambia en cada intento fallido para volver a disparar el temblor del aviso.
+  const [errorAttempt, setErrorAttempt] = useState(0);
 
   const ready = Boolean(size && color);
 
   function handleAdd() {
     if (!ready) {
       setShowErrors(true);
+      setErrorAttempt((n) => n + 1);
       return;
     }
     addItem(product, size, color, quantity);
@@ -50,7 +56,11 @@ export function ProductPurchase({ product }: { product: Product }) {
             </button>
           ))}
         </div>
-        {showErrors && !color && <p className="mt-2 text-sm font-medium text-accent">Seleccioná un color.</p>}
+        {showErrors && !color && (
+          <p key={errorAttempt} role="alert" className="mt-2 animate-shake text-sm font-semibold text-danger">
+            ⚠ Seleccioná un color.
+          </p>
+        )}
       </fieldset>
 
       <fieldset>
@@ -58,7 +68,7 @@ export function ProductPurchase({ product }: { product: Product }) {
           <span>
             Talle: <span className="font-normal normal-case tracking-normal text-muted">{size || "Elegí un talle"}</span>
           </span>
-          <SizeGuide category={product.category} onPick={setSize} />
+          <SizeGuide kind={sizeGuide} onPick={setSize} />
         </legend>
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
           {product.sizes.map((s) => (
@@ -77,7 +87,11 @@ export function ProductPurchase({ product }: { product: Product }) {
             </button>
           ))}
         </div>
-        {showErrors && !size && <p className="mt-2 text-sm font-medium text-accent">Seleccioná un talle.</p>}
+        {showErrors && !size && (
+          <p key={errorAttempt} role="alert" className="mt-2 animate-shake text-sm font-semibold text-danger">
+            ⚠ Seleccioná un talle.
+          </p>
+        )}
       </fieldset>
 
       <div className="flex gap-3">

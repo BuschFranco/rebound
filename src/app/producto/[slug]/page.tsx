@@ -5,25 +5,31 @@ import { notFound } from "next/navigation";
 import { DeliveryEstimate } from "@/components/DeliveryEstimate";
 import { Faq } from "@/components/Faq";
 import { PriceTag } from "@/components/PriceTag";
-import { ProductGrid } from "@/components/ProductGrid";
+import { ProductCarousel } from "@/components/ProductCarousel";
 import { ProductPurchase } from "@/components/ProductPurchase";
 import { PromoCallout } from "@/components/PromoCallout";
 import { SectionHeading } from "@/components/SectionHeading";
 import { StoryBlock } from "@/components/StoryBlock";
+import { TrackProductView } from "@/components/TrackProductView";
 import { TrustStrip } from "@/components/TrustStrip";
 import { JsonLd } from "@/components/JsonLd";
 import { BUSINESS, POLICIES } from "@/data/business";
 import { pageMetadata } from "@/lib/seo";
 import { absoluteUrl } from "@/lib/site";
-import { getCategoryLabel, getProductBySlug, getProducts, getRelated } from "@/lib/products";
+import { getCatalog } from "@/lib/catalog";
+import { CAROUSEL_MAX, getCategoryLabel, getProductBySlug, getRelated } from "@/lib/products";
 
-export function generateStaticParams() {
-  return getProducts().map((p) => ({ slug: p.slug }));
+// Se prerenderizan los productos existentes al compilar; los que se carguen después en la base
+// se generan en la primera visita (dynamicParams es true por defecto).
+export async function generateStaticParams() {
+  const { products } = await getCatalog();
+  return products.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/producto/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const { products } = await getCatalog();
+  const product = getProductBySlug(products, slug);
   if (!product) return {};
   return pageMetadata({
     title: product.name,
@@ -35,10 +41,12 @@ export async function generateMetadata({ params }: PageProps<"/producto/[slug]">
 
 export default async function ProductPage({ params }: PageProps<"/producto/[slug]">) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const { categories, products } = await getCatalog();
+  const product = getProductBySlug(products, slug);
   if (!product) notFound();
 
-  const related = getRelated(product);
+  const related = getRelated(products, product, CAROUSEL_MAX);
+  const categoryLabel = getCategoryLabel(categories, product.category);
   const url = absoluteUrl(`/producto/${product.slug}/`);
   const jsonLd = [
     {
@@ -48,7 +56,7 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
       description: product.description,
       image: product.images,
       sku: product.id,
-      category: getCategoryLabel(product.category),
+      category: categoryLabel,
       brand: { "@type": "Brand", name: BUSINESS.brand },
       color: product.colors.map((c) => c.name).join(", "),
       offers: {
@@ -68,7 +76,7 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
         {
           "@type": "ListItem",
           position: 2,
-          name: getCategoryLabel(product.category),
+          name: categoryLabel,
           item: absoluteUrl(`/catalogo/?categoria=${product.category}`),
         },
         { "@type": "ListItem", position: 3, name: product.name, item: url },
@@ -79,12 +87,13 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
   return (
     <div className="bg-glow">
       <JsonLd data={jsonLd} />
+      <TrackProductView productId={product.id} />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <nav aria-label="Ruta" className="mb-6 text-xs font-semibold uppercase tracking-widest text-muted">
           <Link href="/" className="hover:text-ink">Inicio</Link>
           <span className="mx-2">/</span>
           <Link href={`/catalogo?categoria=${product.category}`} className="hover:text-ink">
-            {getCategoryLabel(product.category)}
+            {categoryLabel}
           </Link>
           <span className="mx-2">/</span>
           <span className="text-ink">{product.name}</span>
@@ -112,7 +121,7 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
           <div className="lg:sticky lg:top-32 lg:self-start">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-[0.3em] text-accent">
-                {getCategoryLabel(product.category)}
+                {categoryLabel}
               </span>
               {product.isNew && (
                 <span className="rounded bg-accent-2 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">
@@ -163,7 +172,12 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
         {related.length > 0 && (
           <section className="mt-24">
             <SectionHeading eyebrow="Completá el look" title="También te puede gustar" />
-            <ProductGrid products={related} />
+            <ProductCarousel
+              products={related}
+              categories={categories}
+              viewMoreHref={`/catalogo?categoria=${product.category}`}
+              label="También te puede gustar"
+            />
           </section>
         )}
 

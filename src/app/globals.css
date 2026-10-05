@@ -11,6 +11,8 @@
   --accent: #ff6a13;
   --accent-2: #8b3dff;
   --whatsapp: #25d366;
+  --danger: #ff4d4f;
+  /* Solo para el hero y los banners; el resto de la página usa colores planos. */
   --brand-gradient: linear-gradient(120deg, #ff6a13 0%, #e0336f 50%, #8b3dff 100%);
 }
 
@@ -25,9 +27,31 @@
   --color-accent: var(--accent);
   --color-accent-2: var(--accent-2);
   --color-whatsapp: var(--whatsapp);
+  --color-danger: var(--danger);
+  --animate-shake: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   --font-sans: var(--font-inter);
   --font-display: var(--font-anton);
   --animate-marquee: marquee 28s linear infinite;
+
+  @keyframes shake {
+    10%,
+    90% {
+      transform: translateX(-1px);
+    }
+    20%,
+    80% {
+      transform: translateX(3px);
+    }
+    30%,
+    50%,
+    70% {
+      transform: translateX(-6px);
+    }
+    40%,
+    60% {
+      transform: translateX(6px);
+    }
+  }
 
   @keyframes marquee {
     from {
@@ -36,6 +60,17 @@
     to {
       transform: translateX(-50%);
     }
+  }
+}
+
+/* Tailwind 4 deja los botones con cursor por defecto: todo lo clickeable muestra la mano. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for],
+  select {
+    cursor: pointer;
   }
 }
 
@@ -49,22 +84,14 @@ body {
   color: #000;
 }
 
+/* Degradé naranja → violeta: reservado al hero y a los banners */
 @utility bg-gradient-brand {
   background-image: var(--brand-gradient);
 }
 
-@utility text-gradient {
-  background-image: var(--brand-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-
-/* Glow naranja/morado de fondo para encabezados de sección */
+/* Tinte violeta plano de fondo para encabezados de sección (sin degradés) */
 @utility bg-glow {
-  background-image:
-    radial-gradient(60% 80% at 15% 0%, rgb(255 106 19 / 0.22), transparent 70%),
-    radial-gradient(50% 80% at 90% 10%, rgb(139 61 255 / 0.25), transparent 70%);
+  background-color: color-mix(in srgb, var(--accent-2) 10%, var(--background));
 }
 
 /* Líneas de cancha sutiles */
@@ -75,7 +102,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
+  .animate-marquee,
+  .animate-shake {
     animation: none;
   }
 }

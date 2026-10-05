@@ -2,9 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { getCategoryLabel } from "@/lib/products";
 import { discountPercent, formatPrice } from "@/lib/format";
-import { PROMO } from "@/data/business";
 import { usePromo } from "@/context/PromoContext";
 import { promoUnitPrice } from "@/lib/promo";
 import type { Product } from "@/types";
@@ -12,15 +10,23 @@ import { PriceTag } from "./PriceTag";
 
 const SIZES = "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw";
 
-export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
-  const { active } = usePromo();
+export function ProductCard({
+  product,
+  categoryLabel,
+  priority = false,
+}: {
+  product: Product;
+  categoryLabel: string;
+  priority?: boolean;
+}) {
+  const { promo: promotion } = usePromo();
   const off = discountPercent(product.price, product.compareAtPrice);
   const [main, hover] = product.images;
 
   return (
     <Link
       href={`/producto/${product.slug}`}
-      className="group block rounded-xl p-[1px] transition hover:bg-gradient-brand"
+      className="group block rounded-xl p-[1px] transition hover:bg-accent"
     >
       <div className="h-full rounded-[11px] bg-surface p-2.5">
         <div className="relative aspect-square overflow-hidden rounded-lg bg-surface-2">
@@ -58,13 +64,13 @@ export function ProductCard({ product, priority = false }: { product: Product; p
         </div>
         <div className="space-y-1.5 px-1 pb-1 pt-3">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted">
-            {getCategoryLabel(product.category)}
+            {categoryLabel}
           </p>
           <h3 className="text-sm font-semibold uppercase leading-snug tracking-wide">{product.name}</h3>
           <PriceTag price={product.price} compareAtPrice={product.compareAtPrice} />
-          {active && (
+          {promotion && (
             <p className="text-[11px] font-semibold text-accent">
-              {formatPrice(promoUnitPrice(product.price))} c/u llevando {PROMO.buy}
+              {formatPrice(promoUnitPrice(product.price, promotion))} c/u llevando {promotion.buy}
             </p>
           )}
           <div className="flex gap-1.5 pt-0.5">

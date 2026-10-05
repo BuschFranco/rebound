@@ -5,11 +5,12 @@ import { useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 import { PageHero } from "@/components/PageHero";
 import { ProductGrid } from "@/components/ProductGrid";
-import { CATEGORIES } from "@/data/products";
+import { useCatalog, useOrderedCategories } from "@/context/CatalogContext";
 import { filterProducts, getCategoryLabel, isCategory, type SortOption } from "@/lib/products";
 
 const SORTS: { value: SortOption; label: string }[] = [
   { value: "relevancia", label: "Relevancia" },
+  { value: "nuevos", label: "Más nuevos" },
   { value: "menor-precio", label: "Menor precio" },
   { value: "mayor-precio", label: "Mayor precio" },
 ];
@@ -23,17 +24,19 @@ function buildHref(params: { q?: string; categoria?: string; orden?: string }) {
   return qs ? `/catalogo?${qs}` : "/catalogo";
 }
 
-/** Filtra en el navegador: el sitio se exporta como estático (GitHub Pages), sin servidor. */
+/** Filtra en el navegador sobre el catálogo que el layout trajo de Supabase (respuesta instantánea al cambiar filtros). */
 export function CatalogView() {
+  const { categories, products: allProducts } = useCatalog();
+  const orderedCategories = useOrderedCategories();
   const params = useSearchParams();
   const q = params.get("q")?.trim() || undefined;
   const rawCategory = params.get("categoria") ?? undefined;
-  const category = isCategory(rawCategory) ? rawCategory : undefined;
+  const category = isCategory(categories, rawCategory) ? rawCategory : undefined;
   const rawSort = params.get("orden");
   const sort = SORTS.some((s) => s.value === rawSort) ? (rawSort as SortOption) : "relevancia";
 
-  const products = filterProducts({ query: q, category, sort });
-  const title = q ? `“${q}”` : category ? getCategoryLabel(category) : "Catálogo";
+  const products = filterProducts({ products: allProducts, categories, query: q, category, sort });
+  const title = q ? `“${q}”` : category ? getCategoryLabel(categories, category) : "Catálogo";
   const eyebrow = q ? "Resultados de búsqueda" : category ? "Categoría" : "Toda la colección";
 
   return (
@@ -47,7 +50,7 @@ export function CatalogView() {
             <FilterChip href={buildHref({ q, orden: sort })} active={!category}>
               Todo
             </FilterChip>
-            {CATEGORIES.map((c) => (
+            {orderedCategories.map((c) => (
               <FilterChip
                 key={c.slug}
                 href={buildHref({ q, categoria: c.slug, orden: sort })}
@@ -81,7 +84,7 @@ export function CatalogView() {
 
         <div className="mt-8">
           {products.length > 0 ? (
-            <ProductGrid products={products} />
+            <ProductGrid products={products} categories={categories} />
           ) : (
             <div className="py-20 text-center">
               <p className="font-display text-4xl uppercase italic">Airball</p>

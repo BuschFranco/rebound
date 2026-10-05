@@ -1,7 +1,6 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
-import { PROMO } from "@/data/business";
 import { usePromo } from "@/context/PromoContext";
 import { formatPrice } from "@/lib/format";
 import { computePromo } from "@/lib/promo";
@@ -22,12 +21,12 @@ export function QuantityPromoHint({
   onSetQuantity: (quantity: number) => void;
 }) {
   const { lines, promo: current } = useCart();
-  const { active } = usePromo();
-  if (!active) return null;
+  const { promo: promotion } = usePromo();
+  if (!promotion) return null;
 
   const future = computePromo(
     [...lines, { key: "__preview__", productId: product.id, size: "", color: "", quantity, product }],
-    active,
+    promotion,
   );
 
   const gained = future.freeUnits - current.freeUnits;
@@ -37,9 +36,9 @@ export function QuantityPromoHint({
 
   if (gained > 0) {
     return (
-      <div role="status" className="rounded-xl bg-gradient-brand p-[1px]">
+      <div role="status" className="rounded-xl bg-accent-2 p-[1px]">
         <div className="rounded-[11px] bg-surface px-4 py-3 text-sm font-semibold text-ink">
-          🔥 ¡Agregando {these} {alreadySaving ? "sumás otra" : "entrás en la promo"} {PROMO.label}!{" "}
+          🔥 ¡Agregando {these} {alreadySaving ? "sumás otra" : "entrás en la promo"} {promotion.label}!{" "}
           <span className="text-accent">
             Te llevás {gained} {alreadySaving ? "más " : ""}gratis y ahorrás {formatPrice(savings)}
             {alreadySaving ? " extra" : ""}.
@@ -62,7 +61,7 @@ export function QuantityPromoHint({
       <div className="min-w-0 flex-1 text-sm">
         {alreadySaving && (
           <p className="mb-1 font-semibold text-ink">
-            ✅ Ya estás aprovechando el {PROMO.label} en tu carrito.
+            ✅ Ya estás aprovechando el {promotion.label} en tu carrito.
           </p>
         )}
         <p>
@@ -73,7 +72,7 @@ export function QuantityPromoHint({
           </strong>{" "}
           {alreadySaving ? "y te llevás otro" : "y el más barato te sale"}{" "}
           <strong className="text-ink">gratis</strong>
-          {alreadySaving ? "." : ` (${PROMO.label}).`}
+          {alreadySaving ? "." : ` (${promotion.label}).`}
         </p>
       </div>
       <button

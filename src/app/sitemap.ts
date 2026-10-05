@@ -1,8 +1,6 @@
 import type { MetadataRoute } from "next";
-import { getProducts } from "@/lib/products";
+import { getCatalog } from "@/lib/catalog";
 import { absoluteUrl } from "@/lib/site";
-
-export const dynamic = "force-static";
 
 const PAGES = [
   { path: "/", priority: 1 },
@@ -15,9 +13,10 @@ const PAGES = [
   { path: "/arrepentimiento/", priority: 0.2 },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const { products } = await getCatalog();
   return [
     ...PAGES.map(({ path, priority }) => ({ url: absoluteUrl(path), priority })),
-    ...getProducts().map((p) => ({ url: absoluteUrl(`/producto/${p.slug}/`), priority: 0.8 })),
+    ...products.map((p) => ({ url: absoluteUrl(`/producto/${p.slug}/`), priority: 0.8 })),
   ];
 }
