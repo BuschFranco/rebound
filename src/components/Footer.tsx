@@ -20,7 +20,7 @@ const PERKS = [
   `Envíos en ${POLICIES.shippingAreasShort}`,
 ];
 
-export function Footer({ categories, promotion }: { categories: CategoryInfo[]; promotion: Promotion | null }) {
+export function Footer({ categories, promotions }: { categories: CategoryInfo[]; promotions: Promotion[] }) {
   return (
     <footer className="relative mt-28 overflow-hidden border-t border-line bg-surface">
       <div className="absolute inset-x-0 top-0 h-px bg-accent" aria-hidden />
@@ -107,11 +107,11 @@ export function Footer({ categories, promotion }: { categories: CategoryInfo[]; 
         <p>
           Precios finales en pesos argentinos con IVA incluido. El costo de envío se informa antes
           de confirmar la compra.{" "}
-          {promotion && (
-            <PromoGate>
-              Promoción {promotion.label} válida {formatPromoValidity(promotion)}.{" "}
+          {promotions.map((p) => (
+            <PromoGate key={p.id} promoId={p.id}>
+              Promoción {p.label} válida {formatPromoValidity(p)}.{" "}
             </PromoGate>
-          )}
+          ))}
           Imágenes ilustrativas.
         </p>
       </div>

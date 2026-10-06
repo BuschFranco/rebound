@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useFavorites } from "@/context/FavoritesContext";
-import { getCategoryLabel } from "@/lib/products";
+import { availableSizes, getCategoryLabel } from "@/lib/products";
 import type { Product } from "@/types";
 import { CloseIcon, StarIcon } from "./icons";
 import { PriceTag } from "./PriceTag";
@@ -103,13 +103,16 @@ function FavoriteRow({ product: p, onNavigate }: { product: Product; onNavigate:
   const { remove } = useFavorites();
   const { addItem } = useCart();
   const { categories } = useCatalog();
-  const [size, setSize] = useState(p.sizes.length === 1 ? p.sizes[0] : "");
+  const inStock = availableSizes(p);
+  const soldOut = inStock.length === 0;
+  const [size, setSize] = useState(p.sizes.length === 1 && inStock.length === 1 ? inStock[0] : "");
   const [color, setColor] = useState(p.colors.length === 1 ? p.colors[0].name : "");
   const [error, setError] = useState("");
   // Cambia en cada intento fallido para volver a disparar el temblor del aviso.
   const [attempt, setAttempt] = useState(0);
 
   function add() {
+    if (soldOut) return;
     const missing = !color ? "un color" : !size ? "un talle" : "";
     if (missing) {
       setError(`Elegí ${missing}.`);
@@ -183,7 +186,15 @@ function FavoriteRow({ product: p, onNavigate }: { product: Product; onNavigate:
         {p.sizes.length > 1 && (
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Talle de ${p.name}`}>
             {p.sizes.map((s) => (
-              <button key={s} type="button" onClick={() => setSize(s)} aria-pressed={size === s} className={chip(size === s)}>
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSize(s)}
+                disabled={!inStock.includes(s)}
+                aria-pressed={size === s}
+                title={inStock.includes(s) ? undefined : "Agotado"}
+                className={inStock.includes(s) ? chip(size === s) : "cursor-not-allowed rounded-md border border-line/60 px-2 py-1 text-xs font-semibold text-muted/60 line-through"}
+              >
                 {s}
               </button>
             ))}
@@ -193,9 +204,12 @@ function FavoriteRow({ product: p, onNavigate }: { product: Product; onNavigate:
         <button
           type="button"
           onClick={add}
-          className="mt-1 self-start rounded-full bg-accent px-4 py-2 text-xs font-bold uppercase tracking-widest text-black transition hover:brightness-110"
+          disabled={soldOut}
+          className={`mt-1 self-start rounded-full px-4 py-2 text-xs font-bold uppercase tracking-widest transition ${
+            soldOut ? "cursor-not-allowed bg-surface-2 text-muted" : "bg-accent text-black hover:brightness-110"
+          }`}
         >
-          Agregar al carrito
+          {soldOut ? "Sin stock" : "Agregar al carrito"}
         </button>
         {error && (
           <p key={attempt} role="alert" className="animate-shake text-xs font-semibold text-danger">

@@ -54,11 +54,16 @@ def friendly_error(payload: dict[str, Any], status: int) -> str:
         rules = {
             "price": "El precio tiene que ser mayor a 0.",
             "compare_at_price": "El precio anterior (oferta) tiene que ser mayor al precio actual.",
+            # Antes que "sizes": el nombre de la regla también contiene esa palabra.
+            "sold_out_sizes": "Los talles agotados tienen que estar en la lista de talles.",
             "images": "El producto necesita al menos una imagen.",
             "sizes": "El producto necesita al menos un talle.",
             "colors": "El producto necesita al menos un color.",
             "slug": "El slug solo puede tener minúsculas, números y guiones.",
-            "promotions_pay_lt_buy": "En la promo, lo que se paga tiene que ser menos de lo que se lleva.",
+            "promotions_nxm": "En “Llevá N, pagá M”, lo que se paga tiene que ser al menos 1 y menos de lo que se lleva.",
+            "promotions_nth_discount": "En el descuento por unidad: desde la 2da unidad, entre 1 y 100 %, y si es por "
+                                       "categorías, elegí al menos una.",
+            "promotions_free_shipping": "En el envío gratis: elegí productos, o poné un monto o una cantidad mayor a 0.",
             "promotions_dates": "La promo tiene que terminar después de empezar.",
             "free_from": "El envío gratis tiene que ser desde un monto mayor a 0.",
         }
@@ -138,6 +143,14 @@ class Api:
     def shipping_zones(self) -> list[dict[str, Any]]:
         return self.select("shipping_zones", select="*,shipping_zone_areas(id,provincia_id,departamento_id)", order="sort_order,name")
 
+    def offers_banner(self) -> dict[str, Any]:
+        rows = self.select("site_banners", id="eq.offers")
+        return rows[0] if rows else {"id": "offers"}
+
+    def save_offers_banner(self, values: dict[str, Any]) -> None:
+        self._request("POST", f"{self.rest}/site_banners", json={"id": "offers", **values},
+                      headers={"Prefer": "resolution=merge-duplicates,return=minimal"})
+
     def count_products_in(self, category_slug: str) -> int:
         return len(self.select("products", select="id", category_slug=f"eq.{category_slug}"))
 
@@ -173,6 +186,11 @@ class Api:
             in_use.update(p["images"])
         for c in self.select("categories", select="image_url"):
             in_use.add(c["image_url"])
+        # Imágenes de los banners de la home.
+        for p in self.select("promotions", select="banner_image_url"):
+            in_use.add(p["banner_image_url"])
+        for b in self.select("site_banners", select="image_url"):
+            in_use.add(b["image_url"])
         keys = [u[len(self.public_prefix):] for u in candidates - in_use]
         if keys:
             self._request("DELETE", f"{self.storage}/object/{BUCKET}", json={"prefixes": keys})

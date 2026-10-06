@@ -34,7 +34,7 @@ export const POLICIES = {
   lastUpdated: "5 de octubre de 2026",
 } as const;
 
-/** La promoción (NxM, etiqueta y fechas de vigencia) vive en la tabla `promotions` de Supabase. */
+/** Las promociones (3x2, descuento en la X unidad, envío gratis) viven en la tabla `promotions` de Supabase. */
 
 /** Un producto se muestra como "Nuevo" durante estos días desde su `published_at` (1 mes y medio). */
 export const NEW_PRODUCT_DAYS = 45;

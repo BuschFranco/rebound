@@ -73,7 +73,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 <FavoritesProvider>
                   <Header />
                   <main className="flex-1">{children}</main>
-                  <Footer categories={catalog.categories} promotion={catalog.promotion} />
+                  <Footer categories={catalog.categories} promotions={catalog.promotions} />
                   <CartDrawer />
                   <FavoritesDrawer />
                   <WhatsAppFloat />

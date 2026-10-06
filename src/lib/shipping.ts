@@ -22,14 +22,21 @@ export type ShippingQuote = {
   missingForFree: number;
 };
 
-/** Costo de envío para un subtotal (ya con la promo aplicada), respetando el envío gratis de la zona. */
-export function quoteShipping(zone: ShippingZone, subtotal: number): ShippingQuote {
-  const isFree = zone.freeFrom !== null && subtotal >= zone.freeFrom;
+/**
+ * Costo de envío para un subtotal (ya con descuentos). Es gratis si lo da una promo de envío gratis
+ * (`freeByPromo`) o si se llega al "gratis desde" de la zona. `promoMissing` = lo que falta para una promo
+ * de envío gratis por monto: se informa el umbral más cercano.
+ */
+export function quoteShipping(zone: ShippingZone, subtotal: number, freeByPromo = false, promoMissing?: number): ShippingQuote {
+  const freeByZone = zone.freeFrom !== null && subtotal >= zone.freeFrom;
+  const isFree = freeByPromo || freeByZone;
+  const zoneMissing = zone.freeFrom !== null ? zone.freeFrom - subtotal : Infinity;
+  const missing = Math.min(zoneMissing, promoMissing ?? Infinity);
   return {
     zone,
     cost: isFree ? 0 : zone.price,
     isFree,
-    missingForFree: zone.freeFrom !== null && !isFree ? zone.freeFrom - subtotal : 0,
+    missingForFree: !isFree && Number.isFinite(missing) ? missing : 0,
   };
 }
 

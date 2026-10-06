@@ -1,7 +1,7 @@
 import type { CartItem, CartLine, Product } from "@/types";
 import { getProductById } from "./products";
 
-export type RemovedReason = "unavailable" | "size" | "color";
+export type RemovedReason = "unavailable" | "size" | "soldOut" | "color";
 
 export type CartNotice =
   | { type: "removed"; key: string; name: string | null; reason: RemovedReason }
@@ -9,7 +9,7 @@ export type CartNotice =
 
 /**
  * Cruza lo guardado en el navegador con el catálogo vigente de la base:
- * - descarta lo que ya no existe (producto eliminado u oculto, talle o color discontinuado);
+ * - descarta lo que ya no existe (producto eliminado u oculto, talle o color discontinuado, talle agotado);
  * - toma siempre el precio actual y avisa si difiere del que vio el cliente.
  */
 export function validateCart(items: CartItem[], products: Product[]) {
@@ -22,7 +22,9 @@ export function validateCart(items: CartItem[], products: Product[]) {
       ? "unavailable"
       : !product.sizes.includes(item.size)
         ? "size"
-        : !product.colors.some((c) => c.name === item.color)
+        : product.soldOutSizes.includes(item.size)
+          ? "soldOut"
+          : !product.colors.some((c) => c.name === item.color)
           ? "color"
           : null;
 

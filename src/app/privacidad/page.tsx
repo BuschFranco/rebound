@@ -33,7 +33,9 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>El contenido de tu pedido</strong>: productos, talles, colores, cantidades y
-          montos.
+          montos. Al tocar &ldquo;Comprar por WhatsApp&rdquo; guardamos una copia <strong>anónima</strong> de ese
+          contenido (sin nombre, teléfono ni dirección; solo la zona de envío y el partido) para saber qué
+          productos y talles se piden más.
         </li>
       </ul>
       <p>

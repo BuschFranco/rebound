@@ -22,7 +22,7 @@ import { CashIcon, CloseIcon, TrashIcon, TruckIcon, WhatsAppIcon } from "./icons
 
 export function CartDrawer() {
   const { lines, notices, isOpen, close, count, promo, updateQty, removeItem, clear } = useCart();
-  const { promo: promotion } = usePromo();
+  const { promos } = usePromo();
   const { products, categories, shippingZones } = useCatalog();
   const savedAddress = useSyncExternalStore(addressStore.subscribe, addressStore.getSnapshot, addressStore.getServerSnapshot);
   // Dirección que se está editando (null = no se edita). El envío se recalcula en vivo con el borrador.
@@ -32,7 +32,7 @@ export function CartDrawer() {
   const suggestions = getCartSuggestions(products, categories, lines.map((l) => l.productId));
   const lenis = useLenis();
   const router = useRouter();
-  const order = buildOrder({ lines, promotion, zones: shippingZones, location });
+  const order = buildOrder({ lines, promotions: promos, zones: shippingZones, location });
   // Pedido verificado contra la base que difiere de lo mostrado: se muestra y se pide confirmación.
   const [pending, setPending] = useState<{ order: Order; notices: CartNotice[] } | null>(null);
   const [checking, setChecking] = useState(false);
@@ -156,7 +156,7 @@ export function CartDrawer() {
           </div>
         ) : (
           <>
-            <CartPromo promo={promo} />
+            <CartPromo order={order} />
             <div className="min-h-56 flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
               <ul className="divide-y divide-line px-5">
                 {lines.map((item) => (
@@ -170,7 +170,13 @@ export function CartDrawer() {
                     </Link>
                     <div className="flex flex-1 flex-col">
                       <div className="flex justify-between gap-2">
-                        <p className="text-sm font-semibold uppercase leading-snug tracking-wide">{item.product.name}</p>
+                        <Link
+                          href={`/producto/${item.product.slug}`}
+                          onClick={close}
+                          className="text-sm font-semibold uppercase leading-snug tracking-wide transition hover:text-accent"
+                        >
+                          {item.product.name}
+                        </Link>
                         <button
                           type="button"
                           onClick={() => removeItem(item.key)}
@@ -259,7 +265,7 @@ export function CartDrawer() {
                     </div>
                     <div className="flex justify-between font-semibold text-accent">
                       <span>
-                        Promo {order.promoLabel} ({promo.freeUnits} gratis)
+                        Promo {order.discountLabel}
                       </span>
                       <span className="tabular-nums">−{formatPrice(promo.discount)}</span>
                     </div>
@@ -269,7 +275,7 @@ export function CartDrawer() {
                   <div className="flex justify-between text-muted">
                     <span>Envío</span>
                     <span className={`tabular-nums ${order.shipping.isFree ? "font-semibold text-whatsapp" : ""}`}>
-                      {order.shipping.isFree ? "Gratis" : formatPrice(order.shipping.cost)}
+                      {order.shipping.isFree ? `Gratis${order.freeShippingLabel ? " (promo)" : ""}` : formatPrice(order.shipping.cost)}
                     </span>
                   </div>
                 )}

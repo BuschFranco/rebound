@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
+import { checkProductionEnv } from "./src/lib/env";
 
 const isDev = process.env.NODE_ENV === "development";
+
+// En producción, cortar el build si faltan variables críticas (WhatsApp, URL del sitio, Supabase…).
+checkProductionEnv();
 
 const nextConfig: NextConfig = {
   // Las URLs del sitio terminan en "/" (canonical, sitemap y links de WhatsApp ya las usan así).

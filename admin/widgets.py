@@ -440,3 +440,59 @@ def set_entry(entry: ctk.CTkEntry | ctk.CTkTextbox, value: Any):
 
 def get_text(widget: ctk.CTkTextbox) -> str:
     return widget.get("1.0", "end").strip()
+
+
+# ---------- Textos e imagen de un banner ----------
+class BannerFields(ctk.CTkFrame):
+    """Campos de un banner de la home. Vacío = texto automático, que se ve como guía gris dentro del campo."""
+
+    FIELDS = (("eyebrow", "Línea superior"), ("title", "Título"), ("text", "Texto"), ("cta", "Botón"))
+
+    def __init__(self, master, thumbs: ThumbCache, variables: str):
+        super().__init__(master, fg_color="transparent")
+        self.grid_columnconfigure(1, weight=1)
+        self.entries: dict[str, ctk.CTkEntry] = {}
+        for row, (key, label) in enumerate(self.FIELDS):
+            ctk.CTkLabel(self, text=label, anchor="w").grid(row=row, column=0, sticky="w", padx=(0, 12), pady=4)
+            entry = ctk.CTkEntry(self, width=560 if key == "text" else 420)
+            entry.grid(row=row, column=1, sticky="w", pady=4)
+            self.entries[key] = entry
+        hint(self, f"Dejá un campo vacío para usar el texto automático (el gris). Variables: {variables}.") \
+            .grid(row=len(self.FIELDS), column=1, sticky="w", pady=(0, 8))
+        ctk.CTkLabel(self, text="Imagen", anchor="w").grid(row=len(self.FIELDS) + 1, column=0, sticky="nw", padx=(0, 12), pady=4)
+        self.image = ImageStrip(self, thumbs, single=True, size=150)
+        self.image.grid(row=len(self.FIELDS) + 1, column=1, sticky="w", pady=4)
+        ghost_button(self, "Usar la imagen predeterminada", lambda: self.image.set([]), width=220) \
+            .grid(row=len(self.FIELDS) + 2, column=1, sticky="w", pady=(2, 0))
+        hint(self, "Sin imagen se usa la predeterminada del sitio. Ideal: horizontal, al menos 1280 px de ancho.") \
+            .grid(row=len(self.FIELDS) + 3, column=1, sticky="w")
+
+    @staticmethod
+    def _show_placeholder(entry: ctk.CTkEntry):
+        # CustomTkinter solo dibuja la guía gris si el campo está vacío y "reactivado".
+        if not entry.get():
+            entry.delete(0, "end")
+            entry._deactivate_placeholder()
+            entry._activate_placeholder()
+
+    def set_placeholders(self, defaults: dict[str, str]):
+        for key, entry in self.entries.items():
+            entry.configure(placeholder_text=defaults.get(key, ""))
+            self._show_placeholder(entry)
+
+    def set(self, values: dict[str, Any]):
+        for key, entry in self.entries.items():
+            entry.delete(0, "end")
+            if values.get(key):
+                entry.insert(0, values[key])
+            else:
+                self._show_placeholder(entry)
+        image = values.get("image_url")
+        self.image.set([image] if image else [])
+
+    def get(self) -> dict[str, Any]:
+        """Textos (None si están vacíos) y la imagen elegida (URL, archivo local o None)."""
+        out: dict[str, Any] = {key: (entry.get().strip() or None) for key, entry in self.entries.items()}
+        images = self.image.get()
+        out["image"] = images[0] if images else None
+        return out

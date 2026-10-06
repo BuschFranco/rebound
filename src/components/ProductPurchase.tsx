@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
+import { availableSizes } from "@/lib/products";
 import type { Product } from "@/types";
 import { QuantityPromoHint } from "./QuantityPromoHint";
 import { SizeGuide } from "./SizeGuide";
@@ -11,7 +12,13 @@ export function ProductPurchase({ product }: { product: Product }) {
   const { addItem } = useCart();
   const { categories } = useCatalog();
   const sizeGuide = categories.find((c) => c.slug === product.category)?.sizeGuide ?? "none";
-  const [size, setSize] = useState(product.sizes.length === 1 ? product.sizes[0] : "");
+  const inStock = availableSizes(product);
+  const soldOut = inStock.length === 0;
+  const [size, setSize] = useState(inStock.length === 1 && product.sizes.length === 1 ? inStock[0] : "");
+  // La guía de talles puede recomendar uno agotado: en ese caso no se elige.
+  const pickSize = (s: string) => {
+    if (inStock.includes(s)) setSize(s);
+  };
   const [color, setColor] = useState(product.colors.length === 1 ? product.colors[0].name : "");
   const [quantity, setQuantity] = useState(1);
   const [showErrors, setShowErrors] = useState(false);
@@ -21,6 +28,7 @@ export function ProductPurchase({ product }: { product: Product }) {
   const ready = Boolean(size && color);
 
   function handleAdd() {
+    if (soldOut) return;
     if (!ready) {
       setShowErrors(true);
       setErrorAttempt((n) => n + 1);
@@ -68,24 +76,37 @@ export function ProductPurchase({ product }: { product: Product }) {
           <span>
             Talle: <span className="font-normal normal-case tracking-normal text-muted">{size || "Elegí un talle"}</span>
           </span>
-          <SizeGuide kind={sizeGuide} onPick={setSize} />
+          <SizeGuide kind={sizeGuide} onPick={pickSize} />
         </legend>
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-          {product.sizes.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSize(s)}
-              aria-pressed={size === s}
-              className={`rounded-lg border px-2 py-2.5 text-sm font-semibold tabular-nums transition ${
-                size === s
-                  ? "border-accent bg-accent text-black"
-                  : "border-line bg-surface-2 hover:border-white/40"
-              }`}
-            >
-              {s}
-            </button>
-          ))}
+          {product.sizes.map((s) => {
+            const out = product.soldOutSizes.includes(s);
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => pickSize(s)}
+                disabled={out}
+                aria-pressed={size === s}
+                aria-label={out ? `${s} (agotado)` : s}
+                title={out ? "Agotado" : undefined}
+                className={`relative rounded-lg border px-2 py-2.5 text-sm font-semibold tabular-nums transition ${
+                  out
+                    ? "cursor-not-allowed border-line/60 bg-surface text-muted/60 line-through"
+                    : size === s
+                      ? "border-accent bg-accent text-black"
+                      : "border-line bg-surface-2 hover:border-white/40"
+                }`}
+              >
+                {s}
+                {out && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded bg-surface-2 px-1 text-[8px] font-bold uppercase tracking-wider text-muted no-underline">
+                    Agotado
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
         {showErrors && !size && (
           <p key={errorAttempt} role="alert" className="mt-2 animate-shake text-sm font-semibold text-danger">
@@ -120,11 +141,16 @@ export function ProductPurchase({ product }: { product: Product }) {
         <button
           type="button"
           onClick={handleAdd}
-          className={`flex-1 rounded-full px-6 py-3.5 text-sm font-bold uppercase tracking-widest text-black transition ${
-            ready ? "bg-accent shadow-[0_0_30px_-5px_var(--accent)] hover:brightness-110" : "bg-accent/40"
+          disabled={soldOut}
+          className={`flex-1 rounded-full px-6 py-3.5 text-sm font-bold uppercase tracking-widest transition ${
+            soldOut
+              ? "cursor-not-allowed bg-surface-2 text-muted"
+              : ready
+                ? "bg-accent text-black shadow-[0_0_30px_-5px_var(--accent)] hover:brightness-110"
+                : "bg-accent/40 text-black"
           }`}
         >
-          Agregar al carrito
+          {soldOut ? "Sin stock" : "Agregar al carrito"}
         </button>
       </div>
 

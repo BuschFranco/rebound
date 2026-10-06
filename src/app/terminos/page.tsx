@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage } from "@/components/LegalPage";
+import { PromoGate } from "@/components/PromoGate";
 import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES } from "@/data/business";
 import { getCatalog } from "@/lib/catalog";
-import { formatPromoValidity } from "@/lib/promo";
+import { promoConditions } from "@/lib/promo";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -13,7 +14,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function TermsPage() {
-  const { promotion } = await getCatalog();
+  const { promotions, categories, products } = await getCatalog();
   return (
     <LegalPage title="Términos y condiciones" current="/terminos">
       <h2>1. Quiénes somos</h2>
@@ -53,16 +54,16 @@ export default async function TermsPage() {
           Los descuentos de precio muestran tachado el precio de lista vigente antes de la rebaja y
           rigen mientras el producto permanezca publicado con ese precio.
         </li>
-        {promotion && (
-          <li>
-            <strong>Promoción {promotion.label}:</strong> por cada {promotion.buy} unidades incluidas en
-            un mismo pedido, las {promotion.buy - promotion.pay} de menor precio no se cobran. Se combina
-            entre todos los productos, talles, colores y categorías, y también con los productos en oferta.
-            Vigencia: {formatPromoValidity(promotion)} (hora de Argentina), igual para todos los clientes.
-            El descuento se calcula sobre los precios publicados y se muestra en el carrito y en el
-            mensaje del pedido.
-          </li>
-        )}
+        {/* Cada promo solo mientras está vigente (si está programada, aparece cuando empieza). */}
+        {promotions.map((p) => (
+          <PromoGate key={p.id} promoId={p.id}>
+            <li>
+              <strong>Promoción {p.label}:</strong> {promoConditions(p, categories, products)} Se combina con los productos en
+              oferta. El descuento se calcula sobre los precios publicados y se muestra en el carrito y en el mensaje
+              del pedido.
+            </li>
+          </PromoGate>
+        ))}
         <li>
           Respetamos el precio publicado al momento en que enviaste tu pedido, aunque cambie
           después (Ley 24.240, art. 7).

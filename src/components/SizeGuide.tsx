@@ -73,9 +73,23 @@ export function SizeGuide({
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
-        className="text-xs font-semibold normal-case tracking-normal text-accent underline underline-offset-2 hover:brightness-110"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent bg-accent/10 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-accent transition hover:bg-accent hover:text-black"
       >
-        📏 Guía de talles
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="size-4"
+          aria-hidden
+        >
+          {/* Regla */}
+          <path d="M3 15.5 15.5 3 21 8.5 8.5 21 3 15.5Z" />
+          <path d="m7 11.5 1.5 1.5M10 8.5l2.5 2.5M13 5.5l1.5 1.5" />
+        </svg>
+        ¿Cuál es mi talle?
       </button>
 
       <dialog

@@ -1,5 +1,5 @@
 import type { CartLine, Promotion, ShippingLocation, ShippingZone } from "@/types";
-import { computePromo, type PromoSummary } from "./promo";
+import { computeDiscounts, freeShippingStatus, type FreeShippingStatus, type PromoSummary } from "./promo";
 import { quoteShipping, resolveZone } from "./shipping";
 
 export type OrderShipping =
@@ -29,8 +29,12 @@ export type OrderLine = {
 export type Order = {
   lines: OrderLine[];
   promo: PromoSummary;
-  /** Etiqueta de la promo aplicada ("3x2"), o null si no hay. */
-  promoLabel: string | null;
+  /** Etiqueta del descuento aplicado ("3x2", "2da al 50%"), o null si no hay. */
+  discountLabel: string | null;
+  /** Etiqueta de la promo que da el envío gratis, o null. */
+  freeShippingLabel: string | null;
+  /** Promo de envío gratis más cercana a cumplirse (para "te faltan…"). */
+  freeShippingNext: FreeShippingStatus["nearest"];
   shipping: OrderShipping;
   /** Productos con promo + envío (si hay localidad dentro de zona). */
   total: number;
@@ -38,17 +42,18 @@ export type Order = {
 
 export function buildOrder({
   lines,
-  promotion,
+  promotions,
   zones,
   location,
 }: {
   lines: CartLine[];
-  /** Promo vigente (null = sin promo). */
-  promotion: Promotion | null;
+  /** Promos vigentes (pueden ser varias; las vencidas o futuras no se pasan). */
+  promotions: Promotion[];
   zones: ShippingZone[];
   location: ShippingLocation | null;
 }): Order {
-  const promo = computePromo(lines, promotion);
+  const promo = computeDiscounts(lines, promotions);
+  const freeShipping = freeShippingStatus(lines, promo.total, promotions);
 
   let shipping: OrderShipping = { status: "unset" };
   if (location) {
@@ -56,7 +61,7 @@ export function buildOrder({
     if (!zone) {
       shipping = { status: "out-of-zone", location };
     } else {
-      const quote = quoteShipping(zone, promo.total);
+      const quote = quoteShipping(zone, promo.total, freeShipping.promo !== null, freeShipping.nearest?.missingAmount);
       shipping = {
         status: "ok",
         location,
@@ -80,7 +85,9 @@ export function buildOrder({
       price: l.product.price,
     })),
     promo,
-    promoLabel: promotion?.label ?? null,
+    discountLabel: promo.applied?.label ?? null,
+    freeShippingLabel: freeShipping.promo?.label ?? null,
+    freeShippingNext: freeShipping.nearest,
     shipping,
     total: promo.total + (shipping.status === "ok" ? shipping.cost : 0),
   };

@@ -3,13 +3,16 @@
 import { useCart } from "@/context/CartContext";
 import { usePromo } from "@/context/PromoContext";
 import { formatPrice } from "@/lib/format";
-import { computePromo } from "@/lib/promo";
-import type { Product } from "@/types";
+import { computeDiscounts, isDiscount } from "@/lib/promo";
+import type { CartLine, Product } from "@/types";
+
+/** Hasta cuántas unidades se simulan para encontrar la próxima oportunidad de ahorro. */
+const MAX_PREVIEW = 6;
 
 /**
- * Debajo del botón de compra:
- * - si al agregar la cantidad elegida se gana una unidad gratis, lo celebra y muestra el ahorro;
- * - si no, cuenta cuántas faltan según lo que ya hay en el carrito y ofrece llevar esa cantidad.
+ * Debajo del botón de compra (sirve para cualquier promo de descuento: 3x2, 2da al 50%, por categoría):
+ * - si al agregar la cantidad elegida se gana un descuento, lo celebra y muestra el ahorro;
+ * - si no, busca cuántas unidades de este producto hacen falta para ahorrar y ofrece llevar esa cantidad.
  */
 export function QuantityPromoHint({
   product,
@@ -21,26 +24,24 @@ export function QuantityPromoHint({
   onSetQuantity: (quantity: number) => void;
 }) {
   const { lines, promo: current } = useCart();
-  const { promo: promotion } = usePromo();
-  if (!promotion) return null;
+  const { promos, appliesTo } = usePromo();
+  if (!appliesTo(product).some(isDiscount)) return null;
 
-  const future = computePromo(
-    [...lines, { key: "__preview__", productId: product.id, size: "", color: "", quantity, product }],
-    promotion,
-  );
+  const withPreview = (n: number) =>
+    computeDiscounts([...lines, { key: "__preview__", productId: product.id, size: "", color: "", quantity: n, product } as CartLine], promos);
 
-  const gained = future.freeUnits - current.freeUnits;
+  const future = withPreview(quantity);
   const savings = future.discount - current.discount;
-  const alreadySaving = current.freeUnits > 0;
+  const alreadySaving = current.discount > 0;
   const these = quantity === 1 ? "esta" : `estas ${quantity}`;
 
-  if (gained > 0) {
+  if (savings > 0 && future.applied) {
     return (
       <div role="status" className="rounded-xl bg-accent-2 p-[1px]">
         <div className="rounded-[11px] bg-surface px-4 py-3 text-sm font-semibold text-ink">
-          🔥 ¡Agregando {these} {alreadySaving ? "sumás otra" : "entrás en la promo"} {promotion.label}!{" "}
+          🔥 ¡Agregando {these} se aplica {future.applied.label}!{" "}
           <span className="text-accent">
-            Te llevás {gained} {alreadySaving ? "más " : ""}gratis y ahorrás {formatPrice(savings)}
+            Ahorrás {formatPrice(savings)}
             {alreadySaving ? " extra" : ""}.
           </span>
         </div>
@@ -48,8 +49,18 @@ export function QuantityPromoHint({
     );
   }
 
-  // Cuántas faltan según lo que ya está en el carrito (sin contar la selección actual).
-  const missing = current.unitsToNextFree;
+  // La menor cantidad de este producto que da un ahorro nuevo.
+  let missing = 0;
+  let target = future;
+  for (let n = 1; n <= MAX_PREVIEW; n++) {
+    const preview = withPreview(n);
+    if (preview.discount > current.discount) {
+      missing = n;
+      target = preview;
+      break;
+    }
+  }
+  if (!missing || !target.applied) return null;
 
   return (
     <div
@@ -59,20 +70,12 @@ export function QuantityPromoHint({
       }`}
     >
       <div className="min-w-0 flex-1 text-sm">
-        {alreadySaving && (
-          <p className="mb-1 font-semibold text-ink">
-            ✅ Ya estás aprovechando el {promotion.label} en tu carrito.
-          </p>
+        {alreadySaving && current.applied && (
+          <p className="mb-1 font-semibold text-ink">✅ Ya estás aprovechando {current.applied.label} en tu carrito.</p>
         )}
         <p>
-          {alreadySaving ? "Sumá" : "Llevá"}{" "}
-          <strong className="text-accent">
-            {missing} {missing === 1 ? "producto" : "productos"}
-            {current.units > 0 ? " más" : ""}
-          </strong>{" "}
-          {alreadySaving ? "y te llevás otro" : "y el más barato te sale"}{" "}
-          <strong className="text-ink">gratis</strong>
-          {alreadySaving ? "." : ` (${promotion.label}).`}
+          Llevando <strong className="text-accent">{missing} {missing === 1 ? "unidad" : "unidades"}</strong> de este producto
+          ahorrás <strong className="text-ink">{formatPrice(target.discount - current.discount)}</strong> ({target.applied.label}).
         </p>
       </div>
       <button

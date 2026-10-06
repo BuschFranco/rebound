@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import webbrowser
 from datetime import datetime
 from tkinter import messagebox
 from typing import Any
@@ -9,10 +10,11 @@ from typing import Any
 import customtkinter as ctk
 
 from db import AR_TZ, SLUG_RE, parse_ts, slugify
-from widgets import (ACCENT, MUTED, OK, ColorList, DateTimeEntry, ImageStrip, format_price, get_text,
+from widgets import (ACCENT, MUTED, OK, ColorList, DateTimeEntry, ImageStrip, format_price, get_text, ghost_button,
                      parse_int, set_entry)
 
 from .base import EditorView
+from .price_adjust import PriceAdjustDialog
 
 ALL = "Todas las categorías"
 # Mismo plazo que NEW_PRODUCT_DAYS en src/data/business.ts.
@@ -37,6 +39,86 @@ class ProductsView(EditorView):
         self.show_hidden = ctk.CTkCheckBox(box, text="Mostrar ocultos", command=self._refresh_list)
         self.show_hidden.select()
         self.show_hidden.pack(anchor="w", pady=(0, 6))
+        ghost_button(box, "% Ajustar precios…", self.open_price_adjust).pack(fill="x", pady=(0, 6))
+        # Aparece solo después de un ajuste masivo, hasta deshacerlo o cerrar el panel.
+        self.undo_button = ghost_button(box, "", self.undo_price_adjust)
+        self.undo_button.configure(border_color=ACCENT, text_color=ACCENT)
+        self.last_adjust: list[dict[str, Any]] = []
+
+    def open_price_adjust(self):
+        if not self.records:
+            return
+        PriceAdjustDialog(self.app, self.records, self.categories, on_done=self.load,
+                          on_applied=self._remember_adjust)
+
+    def _remember_adjust(self, originals: list[dict[str, Any]]):
+        self.last_adjust = originals
+        self.undo_button.configure(text=f"↶ Deshacer ajuste ({len(originals)} productos)")
+        self.undo_button.pack(fill="x", pady=(0, 6))
+
+    def undo_price_adjust(self):
+        originals = self.last_adjust
+        if not originals or not messagebox.askyesno(
+                "Deshacer ajuste", f"¿Volver {len(originals)} producto(s) a los precios de antes del ajuste?"):
+            return
+        self.undo_button.configure(state="disabled", text="Deshaciendo…")
+
+        def work():
+            for o in originals:
+                self.api.update("products", {"id": o["id"]},
+                                {"price": o["price"], "compare_at_price": o["compare_at_price"]})
+            return self.api.revalidate_site()
+
+        def done(revalidated):
+            self.last_adjust = []
+            self.undo_button.configure(state="normal")
+            self.undo_button.pack_forget()
+            self.app.changed(None, f"Ajuste deshecho ({len(originals)} productos)", revalidated)
+            self.load()
+
+        def fail(exc):
+            self.undo_button.configure(state="normal", text=f"↶ Deshacer ajuste ({len(originals)} productos)")
+            messagebox.showerror("No se pudo deshacer", f"{exc}\n\nAlgunos precios pueden haber vuelto: revisá la lista.")
+            self.load()
+
+        self.app.tasks.run(work, done, fail)
+
+    # ---------- Duplicar / ver en el sitio ----------
+    def build_extra_buttons(self, bar):
+        self.duplicate_button = ghost_button(bar, "⧉ Duplicar", self.duplicate, width=110)
+        self.duplicate_button.pack(side="left", padx=(12, 4))
+        self.view_button = ghost_button(bar, "↗ Ver en el sitio", self.open_in_site, width=140)
+        self.view_button.pack(side="left")
+
+    def _sync_record_buttons(self):
+        state = "normal" if self.current else "disabled"
+        self.duplicate_button.configure(state=state)
+        self.view_button.configure(state=state)
+
+    def select(self, key):
+        super().select(key)
+        self._sync_record_buttons()
+
+    def new(self):
+        super().new()
+        self._sync_record_buttons()
+
+    def duplicate(self):
+        """Arma un producto nuevo a partir del actual (mismos datos y fotos). Se crea recién al guardar."""
+        if not self.current:
+            return
+        copy = {**self.current, "name": f"{self.current['name']} (copia)",
+                "slug": f"{self.current['slug']}-copia", "published_at": None}
+        self.new()
+        self.heading.configure(text="Nuevo producto (copia)")
+        self.fill(copy)
+        self.app.status("Copia lista: cambiá lo que haga falta y tocá Guardar para crearla.", "warn")
+
+    def open_in_site(self):
+        if not self.current:
+            return
+        base = self.api.config.site_url or "http://localhost:3000"
+        webbrowser.open(f"{base}/producto/{self.current['slug']}/")
 
     def _label_of(self, slug: str) -> str:
         return next((c["label"] for c in self.categories if c["slug"] == slug), slug)
@@ -117,6 +199,11 @@ class ProductsView(EditorView):
         f.title("Variantes")
         self.sizes = f.add("Talles", ctk.CTkEntry(f, width=420, placeholder_text="S, M, L, XL"),
                            "Separados por coma, en el orden en que se muestran.")
+        self.sizes.bind("<KeyRelease>", lambda _e: self._render_sold_out())
+        self.sold_out_box = f.add("Agotados", ctk.CTkFrame(f, fg_color="transparent"),
+                                  "Marcá los talles sin stock: se ven tachados en la tienda y no se pueden pedir.",
+                                  sticky="ew")
+        self.sold_out: set[str] = set()
         self.colors = f.add("Colores", ColorList(f), "Tocá el cuadrado para elegir el color.", sticky="ew")
 
         f.title("Beneficios (los 3 puntos de la ficha)")
@@ -129,6 +216,27 @@ class ProductsView(EditorView):
                                f"Se muestra como “Nuevo” durante {NEW_PRODUCT_DAYS} días desde esta fecha "
                                "y ordena “Drop nuevo” y “Más nuevos”.")
         self.sort_order = f.add("Orden", ctk.CTkEntry(f, width=100), "Orden en “Relevancia” (menor = primero).")
+
+    def _current_sizes(self) -> list[str]:
+        return [s.strip() for s in self.sizes.get().split(",") if s.strip()]
+
+    def _render_sold_out(self):
+        """Una casilla por talle; se rearma al cambiar la lista de talles."""
+        for child in self.sold_out_box.winfo_children():
+            child.destroy()
+        sizes = self._current_sizes()
+        if not sizes:
+            ctk.CTkLabel(self.sold_out_box, text="Primero cargá los talles.", text_color=MUTED).pack(anchor="w")
+            return
+        for i, size in enumerate(sizes):
+            box = ctk.CTkCheckBox(self.sold_out_box, text=size, width=70,
+                                  command=lambda s=size: self._toggle_sold_out(s))
+            if size in self.sold_out:
+                box.select()
+            box.grid(row=i // 8, column=i % 8, sticky="w", padx=(0, 8), pady=2)
+
+    def _toggle_sold_out(self, size: str):
+        self.sold_out ^= {size}
 
     def _auto_slug(self, _event=None):
         if not self.slug_touched:
@@ -171,6 +279,8 @@ class ProductsView(EditorView):
         self._toggle_offer()
         self.images.set(p.get("images", []))
         set_entry(self.sizes, ", ".join(p.get("sizes", [])) if p else "S, M, L, XL")
+        self.sold_out = set(p.get("sold_out_sizes", []))
+        self._render_sold_out()
         self.colors.set(p.get("colors", []) if p else [{"name": "Negro", "hex": "#111111"}])
         highlights = p.get("highlights", [])
         for i, entry in enumerate(self.highlights):
@@ -214,6 +324,7 @@ class ProductsView(EditorView):
             "description": get_text(self.description),
             "price": price, "compare_at_price": compare,
             "images": images, "sizes": sizes, "colors": colors,
+            "sold_out_sizes": [s for s in sizes if s in self.sold_out],
             "highlights": [e.get().strip() for e in self.highlights if e.get().strip()],
             "active": bool(self.active.get()),
             "published_at": self.published.get("Publicado el").isoformat(),

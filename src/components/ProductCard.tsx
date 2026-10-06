@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { discountPercent, formatPrice } from "@/lib/format";
 import { usePromo } from "@/context/PromoContext";
-import { promoUnitPrice } from "@/lib/promo";
+import { isDiscount, nthUnitPrice, ordinal, productBadges, promoUnitPrice } from "@/lib/promo";
 import type { Product } from "@/types";
 import { FavoriteButton } from "./FavoriteButton";
 import { PriceTag } from "./PriceTag";
@@ -21,7 +21,10 @@ export function ProductCard({
   categoryLabel: string;
   priority?: boolean;
 }) {
-  const { promo: promotion } = usePromo();
+  const { promos, appliesTo } = usePromo();
+  const badges = productBadges(promos, product);
+  // Precio ilustrativo con el primer descuento que le aplica.
+  const discount = appliesTo(product).find(isDiscount);
   const off = discountPercent(product.price, product.compareAtPrice);
   const [main, hover] = product.images;
 
@@ -63,6 +66,11 @@ export function ProductCard({
                   Nuevo
                 </span>
               )}
+              {product.soldOutSizes.length >= product.sizes.length && (
+                <span className="rounded bg-black/75 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+                  Sin stock
+                </span>
+              )}
             </div>
           </div>
           <div className="space-y-1.5 px-1 pb-1 pt-3">
@@ -71,10 +79,26 @@ export function ProductCard({
             </p>
             <h3 className="text-sm font-semibold uppercase leading-snug tracking-wide">{product.name}</h3>
             <PriceTag price={product.price} compareAtPrice={product.compareAtPrice} />
-            {promotion && (
+            {discount?.kind === "nxm" && (
               <p className="text-[11px] font-semibold text-accent">
-                {formatPrice(promoUnitPrice(product.price, promotion))} c/u llevando {promotion.buy}
+                {formatPrice(promoUnitPrice(product.price, discount))} c/u llevando {discount.buy}
               </p>
+            )}
+            {discount?.kind === "nth_discount" && (
+              <p className="text-[11px] font-semibold text-accent">
+                {discount.percent === 100
+                  ? `La ${ordinal(discount.nth)} unidad gratis`
+                  : `${ordinal(discount.nth)} unidad ${formatPrice(nthUnitPrice(product.price, discount))}`}
+              </p>
+            )}
+            {badges.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {badges.map((b) => (
+                  <span key={b} className="rounded bg-accent-2/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-2">
+                    {b}
+                  </span>
+                ))}
+              </div>
             )}
             <div className="flex gap-1.5 pt-0.5">
               {product.colors.map((c) => (

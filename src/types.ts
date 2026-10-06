@@ -13,15 +13,49 @@ export type CategoryInfo = {
   complements: Category[];
 };
 
-/** Promoción por cantidad NxM con fechas fijas (tabla `promotions`). Fechas en ms. */
-export type Promotion = {
+/** Textos e imagen de un banner de la home (editables en el panel). null = texto automático. */
+export type BannerCopy = {
+  eyebrow: string | null;
+  title: string | null;
+  text: string | null;
+  cta: string | null;
+  imageUrl: string | null;
+};
+
+/** Datos comunes de toda promoción (tabla `promotions`): fechas fijas, iguales para todos. Fechas en ms. */
+type PromotionBase = {
   id: string;
+  /** Banner de la home cuando es la promo principal. */
+  banner: BannerCopy;
+  /** Texto corto que se muestra en el sitio ("3x2", "2da al 50%", "Envío gratis desde $100.000"). */
   label: string;
-  buy: number;
-  pay: number;
   startsAt: number;
   endsAt: number;
 };
+
+/** Llevá N, pagá M en toda la tienda (las más baratas de cada grupo salen gratis). */
+export type NxmPromotion = PromotionBase & { kind: "nxm"; buy: number; pay: number };
+
+/** % de descuento en la N-ésima unidad: del mismo producto o dentro de categorías elegidas. */
+export type NthDiscountPromotion = PromotionBase & {
+  kind: "nth_discount";
+  nth: number;
+  percent: number;
+  scope: "same_product" | "categories";
+  categorySlugs: Category[];
+};
+
+/** Envío gratis: en productos elegidos, desde un monto o llevando X unidades. */
+export type FreeShippingPromotion = PromotionBase & {
+  kind: "free_shipping";
+} & (
+    | { rule: "products"; productIds: string[] }
+    | { rule: "min_amount"; minAmount: number }
+    | { rule: "min_units"; minUnits: number }
+  );
+
+export type DiscountPromotion = NxmPromotion | NthDiscountPromotion;
+export type Promotion = DiscountPromotion | FreeShippingPromotion;
 
 export type ProductColor = {
   name: string;
@@ -38,6 +72,8 @@ export type Product = {
   compareAtPrice?: number;
   images: string[];
   sizes: string[];
+  /** Talles sin stock: se muestran tachados y no se pueden pedir. */
+  soldOutSizes: string[];
   colors: ProductColor[];
   /** Fecha de publicación (ms). */
   publishedAt: number;
@@ -104,6 +140,10 @@ export type Catalog = {
   categories: CategoryInfo[];
   products: Product[];
   shippingZones: ShippingZone[];
-  /** Promoción activa vigente o próxima a empezar; null si no hay. */
-  promotion: Promotion | null;
+  /** Promociones activas vigentes o próximas a empezar (pueden convivir varias). */
+  promotions: Promotion[];
+  /** Banner de ofertas de la home (tabla `site_banners`). */
+  offersBanner: BannerCopy;
+  /** Cuándo se leyó de la base (ms). Con esto el HTML del servidor decide si la promo ya estaba vigente. */
+  fetchedAt: number;
 };

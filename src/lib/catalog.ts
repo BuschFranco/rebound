@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { Catalog, CategoryInfo, Product, ProductColor, Promotion, ShippingZone, SizeGuideKind } from "@/types";
+import type { BannerCopy, Catalog, CategoryInfo, Product, ProductColor, Promotion, ShippingZone, SizeGuideKind } from "@/types";
 import type { Database } from "./database.types";
 import { NEW_PRODUCT_DAYS } from "@/data/business";
 import { createCatalogClient } from "./supabase";
@@ -44,6 +44,7 @@ function toProduct(row: ProductRow, now: number): Product {
     ...(row.compare_at_price ? { compareAtPrice: row.compare_at_price } : {}),
     images: row.images,
     sizes: row.sizes,
+    soldOutSizes: row.sold_out_sizes ?? [],
     colors: toColors(row.colors),
     highlights: row.highlights,
     publishedAt,
@@ -51,15 +52,41 @@ function toProduct(row: ProductRow, now: number): Product {
   };
 }
 
-function toPromotion(row: PromotionRow): Promotion {
-  return {
+/** Textos del banner: los vacíos quedan en null (se usa el texto automático). */
+function toBanner(row: { eyebrow: string | null; title: string | null; text: string | null; cta: string | null; image_url: string | null } | null): BannerCopy {
+  const clean = (v: string | null | undefined) => (v && v.trim() ? v.trim() : null);
+  return { eyebrow: clean(row?.eyebrow), title: clean(row?.title), text: clean(row?.text), cta: clean(row?.cta), imageUrl: clean(row?.image_url) };
+}
+
+/** Fila de la base → promoción tipada. Devuelve null si a la fila le faltan los datos de su tipo. */
+function toPromotion(row: PromotionRow): Promotion | null {
+  const base = {
     id: row.id,
     label: row.label,
-    buy: row.buy,
-    pay: row.pay,
     startsAt: Date.parse(row.starts_at),
     endsAt: Date.parse(row.ends_at),
+    banner: toBanner({
+      eyebrow: row.banner_eyebrow,
+      title: row.banner_title,
+      text: row.banner_text,
+      cta: row.banner_cta,
+      image_url: row.banner_image_url,
+    }),
   };
+  if (row.kind === "nxm" && row.buy && row.pay) return { ...base, kind: "nxm", buy: row.buy, pay: row.pay };
+  if (row.kind === "nth_discount" && row.nth && row.percent && (row.scope === "same_product" || row.scope === "categories")) {
+    return { ...base, kind: "nth_discount", nth: row.nth, percent: row.percent, scope: row.scope, categorySlugs: row.category_slugs };
+  }
+  if (row.kind === "free_shipping") {
+    if (row.shipping_rule === "products") return { ...base, kind: "free_shipping", rule: "products", productIds: row.product_ids };
+    if (row.shipping_rule === "min_amount" && row.min_amount) {
+      return { ...base, kind: "free_shipping", rule: "min_amount", minAmount: row.min_amount };
+    }
+    if (row.shipping_rule === "min_units" && row.min_units) {
+      return { ...base, kind: "free_shipping", rule: "min_units", minUnits: row.min_units };
+    }
+  }
+  return null;
 }
 
 function toZone(row: ZoneRow): ShippingZone {
@@ -75,31 +102,35 @@ function toZone(row: ZoneRow): ShippingZone {
 
 async function fetchCatalog({ fresh }: { fresh: boolean }): Promise<Catalog> {
   const supabase = createCatalogClient({ fresh });
-  const [categories, products, zones, promotions] = await Promise.all([
+  const [categories, products, zones, promotions, banners] = await Promise.all([
     supabase.from("categories").select("*").order("sort_order"),
     supabase.from("products").select("*").order("sort_order").order("created_at"),
     supabase
       .from("shipping_zones")
       .select("*, shipping_zone_areas(provincia_id, departamento_id)")
       .order("sort_order"),
-    // Promo vigente o la próxima a empezar (las vencidas no se traen).
+    // Promos vigentes y próximas (las vencidas no se traen). Pueden convivir varias.
     supabase
       .from("promotions")
       .select("*")
       .gt("ends_at", new Date().toISOString())
-      .order("starts_at")
-      .limit(1),
+      .order("starts_at"),
+    supabase.from("site_banners").select("*"),
   ]);
   if (categories.error) throw new Error(`No se pudieron leer las categorías: ${categories.error.message}`);
   if (products.error) throw new Error(`No se pudieron leer los productos: ${products.error.message}`);
   if (zones.error) throw new Error(`No se pudieron leer las zonas de envío: ${zones.error.message}`);
   if (promotions.error) throw new Error(`No se pudo leer la promoción: ${promotions.error.message}`);
 
+  const fetchedAt = Date.now();
   return {
     categories: categories.data.map(toCategory),
-    products: products.data.map((row) => toProduct(row, Date.now())),
+    products: products.data.map((row) => toProduct(row, fetchedAt)),
     shippingZones: (zones.data as ZoneRow[]).map(toZone),
-    promotion: promotions.data[0] ? toPromotion(promotions.data[0]) : null,
+    promotions: promotions.data.flatMap((row) => toPromotion(row) ?? []),
+    // Si la tabla no responde, el banner de ofertas usa los textos automáticos.
+    offersBanner: toBanner(banners.data?.find((b) => b.id === "offers") ?? null),
+    fetchedAt,
   };
 }
 

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { CashIcon, TruckIcon, WhatsAppIcon } from "@/components/icons";
 import { Faq } from "@/components/Faq";
-import { PromoCountdown } from "@/components/PromoCountdown";
 import { PromoGate } from "@/components/PromoGate";
 import { FavoritesSection } from "@/components/FavoritesSection";
 import { PersonalizedSections } from "@/components/PersonalizedSections";
@@ -11,11 +11,14 @@ import { CategoryCarousel } from "@/components/CategoryCarousel";
 import { ProductCarousel } from "@/components/ProductCarousel";
 import { SectionHeading } from "@/components/SectionHeading";
 import { StoryBlock } from "@/components/StoryBlock";
-import { BANNER_IMAGE, HERO_IMAGE } from "@/data/site";
+import { HERO_IMAGE } from "@/data/site";
 import { getCatalog } from "@/lib/catalog";
 import { DELIVERY, POLICIES } from "@/data/business";
-import { formatPromoValidity } from "@/lib/promo";
-import { CAROUSEL_MAX, getLatestProducts, getMaxDiscount, getOnSale } from "@/lib/products";
+import { promoHeadline } from "@/lib/promo";
+import { OFFERS_BANNER_DEFAULTS, resolveBanner } from "@/lib/banners";
+import { HeroPromoTag, HomeBanners } from "@/components/PromoBanner";
+import { CAROUSEL_MAX, getCategoryLabel, getLatestProducts, getMaxDiscount, getOnSale, getTopDiscounts } from "@/lib/products";
+import { ProductCard } from "@/components/ProductCard";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -35,14 +38,20 @@ const MARQUEE: { text: string; promo?: boolean }[] = [
 ];
 
 export default async function Home() {
-  const { categories, products, promotion } = await getCatalog();
-  // La promo (de la tabla `promotions`) va primera en la marquesina; PromoGate la oculta si no está vigente.
-  const marquee = promotion ? [{ text: `${promotion.label} en toda la web`, promo: true }, ...MARQUEE] : MARQUEE;
+  const { categories, products, promotions, offersBanner } = await getCatalog();
+  // Las promos (tabla `promotions`) van primeras en la marquesina; PromoGate oculta las que no están vigentes.
+  const marquee: { text: string; promoId?: string }[] = [
+    ...promotions.map((p) => ({ text: promoHeadline(p, categories), promoId: p.id })),
+    ...MARQUEE.map(({ text }) => ({ text })),
+  ];
   // Siempre los últimos publicados; el eyebrow dice "Recién llegado" si alguno es nuevo (< 1 mes y medio).
   const latest = getLatestProducts(products, CAROUSEL_MAX);
   const hasNew = latest.some((p) => p.isNew);
   const onSale = getOnSale(products);
   const maxDiscount = getMaxDiscount(products);
+  const topDiscounts = getTopDiscounts(products, 3);
+  // Banner de ofertas: lo cargado en el panel (pestaña Banners) o los textos automáticos.
+  const offers = resolveBanner(offersBanner, OFFERS_BANNER_DEFAULTS, { descuento: maxDiscount, cantidad: onSale.length });
 
   return (
     <>
@@ -64,18 +73,7 @@ export default async function Home() {
         <div className="absolute -right-20 top-10 -z-10 size-[420px] rounded-full bg-accent-2/20 blur-[120px]" />
 
         <div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-32 sm:px-6 sm:pb-24">
-          {promotion ? (
-            <PromoGate fallback={<SeasonTag />}>
-              <p className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full bg-accent-2 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-white">
-                <span>
-                  {promotion.label} en toda la web · llevá {promotion.buy}, pagá {promotion.pay}
-                </span>
-                <PromoCountdown className="tracking-widest" />
-              </p>
-            </PromoGate>
-          ) : (
-            <SeasonTag />
-          )}
+          <HeroPromoTag fallback={<SeasonTag />} />
           <h1 className="mt-4 max-w-3xl font-display text-[clamp(3.5rem,11vw,9rem)] uppercase italic leading-[0.85]">
             Jugá en
             <br />
@@ -107,7 +105,7 @@ export default async function Home() {
         <div className="flex w-max animate-marquee">
           {[0, 1].map((copy) => (
             <ul key={copy} className="flex shrink-0">
-              {[...marquee, ...marquee].map(({ text, promo }, i) => {
+              {[...marquee, ...marquee].map(({ text, promoId }, i) => {
                 const item = (
                   <li
                     key={i}
@@ -117,7 +115,13 @@ export default async function Home() {
                     <span className="size-2.5 rounded-full bg-accent" />
                   </li>
                 );
-                return promo ? <PromoGate key={i}>{item}</PromoGate> : item;
+                return promoId ? (
+                  <PromoGate key={i} promoId={promoId}>
+                    {item}
+                  </PromoGate>
+                ) : (
+                  item
+                );
               })}
             </ul>
           ))}
@@ -130,6 +134,35 @@ export default async function Home() {
         {/* Las más visitadas por el cliente primero; si hay más de las que entran, aparecen flechas. */}
         <CategoryCarousel />
       </section>
+
+      {/* Banners: uno por promo vigente y el de ofertas (si hay productos rebajados), en una fila deslizable */}
+      <HomeBanners offers={onSale.length > 0 ? offers : null} />
+
+      {/* Grandes descuentos: el top 3 de productos con mayor % de descuento */}
+      {topDiscounts.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">
+          <SectionHeading eyebrow="Top 3" title="Grandes descuentos" href="/ofertas" linkLabel="Ver todas las ofertas" />
+          <ol className="grid gap-x-4 gap-y-8 pt-2 sm:grid-cols-3">
+            {topDiscounts.map((p, i) => (
+              <li
+                key={p.id}
+                className="relative rounded-xl ring-1 ring-[var(--medal)]"
+                // Sutil: borde fino al 45 % y un halo corto al 30 % (sufijo hex de opacidad).
+                style={{ "--medal": `${MEDALS[i].color}73`, boxShadow: `0 0 22px -8px ${MEDALS[i].color}4d` } as CSSProperties}
+              >
+                <span
+                  aria-label={`Puesto ${i + 1} (${MEDALS[i].name})`}
+                  className="pointer-events-none absolute -top-4 left-1/2 z-10 grid size-11 -translate-x-1/2 place-items-center rounded-full font-display text-xl italic text-black ring-4 ring-background"
+                  style={{ backgroundColor: MEDALS[i].color }}
+                >
+                  #{i + 1}
+                </span>
+                <ProductCard product={p} categoryLabel={getCategoryLabel(categories, p.category)} />
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       {/* Para quien vuelve: vistos y relacionados (historial local, sin registro) */}
       <PersonalizedSections />
@@ -146,44 +179,6 @@ export default async function Home() {
           <ProductCarousel products={latest} categories={categories} viewMoreHref="/catalogo?orden=nuevos" label="Drop nuevo" />
         </section>
       )}
-
-      {/* Banner */}
-      <section className="mx-auto mt-20 max-w-7xl px-4 sm:px-6">
-        <div className="relative isolate overflow-hidden rounded-2xl">
-          <Image
-            src={BANNER_IMAGE}
-            alt=""
-            fill
-            sizes="(min-width: 1280px) 1280px, 100vw"
-            className="-z-20 object-cover"
-          />
-          <div className="absolute inset-0 -z-10 bg-gradient-brand opacity-85 mix-blend-multiply" />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/60 to-transparent" />
-          <div className="px-6 py-16 sm:px-12 sm:py-24">
-            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-bold uppercase tracking-[0.35em] text-white/80">
-              {promotion ? (
-                <PromoGate fallback={<span>Ofertas de temporada</span>}>
-                  <span>
-                    Promo {promotion.label} · {formatPromoValidity(promotion)}
-                  </span>
-                  <PromoCountdown className="tracking-widest" />
-                </PromoGate>
-              ) : (
-                <span>Ofertas de temporada</span>
-              )}
-            </p>
-            <h2 className="mt-3 font-display text-6xl uppercase italic leading-[0.9] sm:text-8xl">
-              Hasta {maxDiscount}% off
-            </h2>
-            <Link
-              href="/ofertas"
-              className="mt-8 inline-block rounded-full bg-white px-7 py-3.5 text-sm font-bold uppercase tracking-widest text-black transition hover:bg-accent"
-            >
-              Ver ofertas
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Ofertas */}
       <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">
@@ -223,6 +218,13 @@ export default async function Home() {
     </>
   );
 }
+
+/** Colores de medalla del top 3 (resplandor, borde y círculo del puesto). */
+const MEDALS = [
+  { name: "oro", color: "#f5c542" },
+  { name: "plata", color: "#c9d1db" },
+  { name: "bronce", color: "#cd7f32" },
+];
 
 function SeasonTag() {
   return <p className="text-xs font-bold uppercase tracking-[0.35em] text-accent">Temporada 2026</p>;

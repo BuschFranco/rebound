@@ -29,6 +29,17 @@ export function getOnSale(products: Product[]) {
   return products.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price);
 }
 
+/** Los de mayor % de descuento (si empatan, el de mayor ahorro en pesos). */
+export function getTopDiscounts(products: Product[], limit = 3) {
+  return [...getOnSale(products)]
+    .sort(
+      (a, b) =>
+        discountPercent(b.price, b.compareAtPrice) - discountPercent(a.price, a.compareAtPrice) ||
+        (b.compareAtPrice! - b.price) - (a.compareAtPrice! - a.price),
+    )
+    .slice(0, limit);
+}
+
 /** Productos ordenados por fecha de publicación, el más reciente primero. */
 export function sortByNewest(products: Product[]) {
   return [...products].sort((a, b) => b.publishedAt - a.publishedAt);
@@ -114,6 +125,11 @@ export function searchProducts(products: Product[], categories: CategoryInfo[], 
     .map((p, i) => ({ p, i, rank: rank(p) }))
     .sort((a, b) => a.rank - b.rank || a.i - b.i)
     .map((x) => x.p);
+}
+
+/** Talles que se pueden pedir (los que no están agotados). */
+export function availableSizes(product: Product) {
+  return product.sizes.filter((s) => !product.soldOutSizes.includes(s));
 }
 
 export function getMaxDiscount(products: Product[]) {

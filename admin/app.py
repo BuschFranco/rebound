@@ -16,7 +16,9 @@ import customtkinter as ctk  # noqa: E402
 
 from config import ConfigError, load_config  # noqa: E402
 from db import Api  # noqa: E402
+from views.banners import BannersView  # noqa: E402
 from views.categories import CategoriesView  # noqa: E402
+from views.orders import OrdersView  # noqa: E402
 from views.products import ProductsView  # noqa: E402
 from views.promotions import PromotionsView  # noqa: E402
 from views.shipping import ShippingView  # noqa: E402
@@ -57,7 +59,7 @@ class AdminApp(ctk.CTk):
         self.tabs.pack(fill="both", expand=True, padx=14, pady=(4, 0))
         self.views = {}
         for name, cls in (("Productos", ProductsView), ("Categorías", CategoriesView),
-                          ("Promociones", PromotionsView), ("Envíos", ShippingView)):
+                          ("Promociones", PromotionsView), ("Banners", BannersView), ("Envíos", ShippingView), ("Pedidos", OrdersView)):
             tab = self.tabs.add(name)
             view = cls(tab, self)
             view.pack(fill="both", expand=True)

@@ -4,6 +4,7 @@ import { formatPrice } from "@/lib/format";
 const REMOVED_TEXT = {
   unavailable: "ya no está disponible",
   size: "ya no tiene el talle que elegiste",
+  soldOut: "se agotó el talle que elegiste",
   color: "ya no tiene el color que elegiste",
 } as const;
 

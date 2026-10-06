@@ -4,13 +4,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { usePromo } from "@/context/PromoContext";
 import { DELIVERY, POLICIES } from "@/data/business";
-import { formatPromoValidity } from "@/lib/promo";
-import type { Promotion } from "@/types";
+import { useCatalog } from "@/context/CatalogContext";
+import { formatPromoValidity, isDiscount, promoDescription } from "@/lib/promo";
+import type { CategoryInfo, Promotion } from "@/types";
 import { SectionHeading } from "./SectionHeading";
 
 type QA = { q: string; a: ReactNode };
 
-function buildQuestions(promo: Promotion | null): QA[] {
+function buildQuestions(promos: Promotion[], categories: CategoryInfo[]): QA[] {
   return [
   {
     q: "¿Cómo funciona pagar al recibir?",
@@ -22,20 +23,18 @@ function buildQuestions(promo: Promotion | null): QA[] {
       </>
     ),
   },
-  ...(promo
-    ? [
-        {
-          q: `¿Cómo funciona el ${promo.label}?`,
-          a: (
-            <>
-              Por cada {promo.buy} productos que lleves, el más barato es gratis. Podés combinar
-              modelos, talles, colores y categorías. El descuento se calcula solo en el carrito.
-              Válido {formatPromoValidity(promo)}.
-            </>
-          ),
-        },
-      ]
-    : []),
+  // Una pregunta por promo vigente.
+  ...promos.map((promo) => ({
+    q: promo.kind === "free_shipping" ? `¿Cómo funciona el ${promo.label.toLowerCase()}?` : `¿Cómo funciona el ${promo.label}?`,
+    a: (
+      <>
+        {promoDescription(promo, categories)} Se calcula solo en el carrito. Válido {formatPromoValidity(promo)}.
+        {isDiscount(promo) && promos.filter(isDiscount).length > 1 && (
+          <> Los descuentos no se acumulan: se aplica el que más te conviene.</>
+        )}
+      </>
+    ),
+  })),
   {
     q: "¿Cuánto tarda en llegar?",
     a: (
@@ -79,8 +78,9 @@ function buildQuestions(promo: Promotion | null): QA[] {
 }
 
 export function Faq({ className = "" }: { className?: string }) {
-  const { promo } = usePromo();
-  const questions = buildQuestions(promo);
+  const { promos } = usePromo();
+  const { categories } = useCatalog();
+  const questions = buildQuestions(promos, categories);
   return (
     <section className={className}>
       <SectionHeading eyebrow="Sacate las dudas" title="Preguntas frecuentes" />

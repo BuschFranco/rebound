@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { Suspense, useState, type MouseEvent } from "react";
 import { usePromo } from "@/context/PromoContext";
 import { POLICIES } from "@/data/business";
-import { useOrderedCategories } from "@/context/CatalogContext";
+import { useCatalog, useOrderedCategories } from "@/context/CatalogContext";
+import { promoHeadline } from "@/lib/promo";
 import { CartButton } from "./CartButton";
 import { FavoritesButton } from "./FavoritesButton";
 import { CatalogMenu } from "./CatalogMenu";
@@ -25,7 +26,8 @@ const NAV = [
 export function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { promo: promotion } = usePromo();
+  const { promos } = usePromo();
+  const { categories: allCategories } = useCatalog();
   const categories = useOrderedCategories();
   const lenis = useLenis();
 
@@ -41,9 +43,19 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-background/80 backdrop-blur-xl">
       <div className="bg-accent-2 px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
-        {promotion && (
+        {promos.length > 0 && (
           <>
-            {promotion.label} en toda la web · <PromoCountdown className="gap-1" /> ·{" "}
+            {/* Para que la barra no ocupe media pantalla: 1 promo en el celular, 2 en la compu; el resto, en el banner. */}
+            {promoHeadline(promos[0], allCategories)}
+            {promos[1] && <span className="hidden sm:inline"> · {promoHeadline(promos[1], allCategories)}</span>}
+            {promos.length > 1 && (
+              <span className="sm:hidden">
+                {" "}
+                · +{promos.length - 1} {promos.length - 1 === 1 ? "promo" : "promos"}
+              </span>
+            )}
+            {promos.length > 2 && <span className="hidden sm:inline"> · +{promos.length - 2} promos</span>} ·{" "}
+            <PromoCountdown promo={promos[0]} variant="inline" className="gap-1" /> ·{" "}
           </>
         )}
         Pagás al recibir · Envíos en CABA y PBA · Cambio gratis {POLICIES.exchangeDays} días

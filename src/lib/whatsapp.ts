@@ -24,7 +24,7 @@ export function buildOrderMessage(order: Order, address: SavedAddress | null, si
   const shippingLines =
     shipping.status === "ok"
       ? [
-          `Envío a ${formatLocation(shipping.location)}: ${shipping.isFree ? "GRATIS" : formatPrice(shipping.cost)} (${shipping.eta})`,
+          `Envío a ${formatLocation(shipping.location)}: ${shipping.isFree ? `GRATIS${order.freeShippingLabel ? ` (promo ${order.freeShippingLabel})` : ""}` : formatPrice(shipping.cost)} (${shipping.eta})`,
           `*Total: ${formatPrice(order.total)}*`,
         ]
       : shipping.status === "out-of-zone"
@@ -51,7 +51,7 @@ export function buildOrderMessage(order: Order, address: SavedAddress | null, si
     ...(promo.discount > 0
       ? [
           `Subtotal: ${formatPrice(promo.subtotal)}`,
-          `Promo ${order.promoLabel ?? ""} (${promo.freeUnits} gratis): -${formatPrice(promo.discount)}`,
+          `Promo ${order.discountLabel ?? ""} (${promo.discountedUnits} ${promo.discountedUnits === 1 ? "unidad" : "unidades"} con descuento): -${formatPrice(promo.discount)}`,
         ]
       : []),
     ...shippingLines,

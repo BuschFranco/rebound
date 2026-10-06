@@ -13,7 +13,7 @@ npm run db:start                   # levanta Supabase en Docker y carga los prod
 npm run dev
 ```
 
-- Sitio: http://localhost:3000
+- Sitio: http://localhost:3000 (`npm run dev` avisa en amarillo si la base no responde, por ejemplo con Docker apagado).
 - Panel de la base (Supabase Studio): http://127.0.0.1:54323 → **Table Editor** para editar productos y categorías.
 
 ### Comandos de la base
@@ -29,10 +29,12 @@ npm run dev
 
 App de escritorio en Python (CustomTkinter) para manejar todo lo que está en la base sin entrar a Studio:
 
-- **Productos:** alta, edición y baja (u ocultarlos), precio, oferta (precio anterior con el % de descuento), fotos (subir desde la PC o pegar un link, ordenarlas: la primera es la principal), talles, colores, beneficios y fecha de publicación.
+- **Productos:** alta, edición, **duplicar**, baja (u ocultarlos), **ver en el sitio**, **ajuste masivo de precios por %** (por categoría, con redondeo a 999 y vista previa; en ofertas mantiene el descuento; se puede **deshacer**), **talles agotados** (se ven tachados en la tienda y no se pueden pedir), precio, oferta (precio anterior con el % de descuento), fotos (subir desde la PC o pegar un link, ordenarlas: la primera es la principal), talles, colores, beneficios y fecha de publicación.
 - **Categorías:** alta y baja (se bloquea si todavía tiene productos), portada, orden, guía de talles y "Completá el look".
-- **Promociones:** crear y eliminar promos NxM con fechas de inicio y fin (hora de Argentina). Avisa si se superponen.
+- **Promociones:** crear y eliminar promos de tres tipos, con fechas de inicio y fin (hora de Argentina): **Llevá N, pagá M** (3x2), **descuento en la X unidad** (del mismo producto o en categorías elegidas, ej. 2da al 50%) y **envío gratis** (en productos elegidos, desde un monto o llevando X unidades). La etiqueta se arma sola. Avisa si dos descuentos se superponen. Cada promo tiene su **banner en la home** (línea superior, título, texto, botón e imagen).
+- **Banners:** textos e imagen del banner de ofertas de la home. En los dos casos, un campo vacío usa el texto automático (se ve en gris en el campo) y se pueden usar variables: `{etiqueta}` y `{vigencia}` en promos, `{descuento}` y `{cantidad}` en ofertas (`src/lib/banners.ts`, tabla `site_banners`).
 - **Envíos:** zonas con costo, envío gratis, demora y las provincias/partidos que cubren (elegidos por nombre, vía Georef).
+- **Pedidos:** lo que se envió por WhatsApp en los últimos 7/30/90 días (pedidos, unidades, monto, productos y talles más pedidos). Se registra de forma anónima en la tabla `order_intents` a través de la función `log_order_intent` (el sitio solo puede insertar, no leer); no guarda nombre, teléfono ni dirección.
 
 Cómo abrirlo:
 
@@ -57,7 +59,10 @@ Cómo abrirlo:
 
 ### Promociones y reglas de categorías
 
-- **Promo por cantidad** (tabla `promotions`): `label` ("3x2"), `buy` / `pay` (por cada 3 pagás 2), `starts_at` / `ends_at` (fechas fijas, iguales para todos) y `active`. El sitio usa la promo vigente o la próxima a empezar: barra superior, hero, tarjetas, ficha, carrito, mensaje de WhatsApp, cuenta regresiva y Términos y condiciones salen de ahí. Para cambiarla, editá la fila en Studio (o creá otra) y llamá a `/api/revalidate/`. El descuento lo calcula siempre el servidor con la hora actual al comprar.
+- **Promociones** (tabla `promotions`, se manejan desde el panel): `kind` = `nxm` (`buy`/`pay`), `nth_discount` (`nth`, `percent`, `scope` = `same_product` o `categories` + `category_slugs`) o `free_shipping` (`shipping_rule` = `products` + `product_ids`, `min_amount` o `min_units`), con `label`, `starts_at` / `ends_at` (fechas fijas, iguales para todos) y `active`.
+  - **Pueden convivir varias.** Las de envío gratis se suman a los descuentos; si hay varios descuentos vigentes **no se acumulan**: el carrito aplica el que más ahorra y lo dice.
+  - El motor está en `src/lib/promo.ts` y lo usan el carrito y el servidor (`/api/cart/quote/` recalcula todo con la hora del servidor antes de abrir WhatsApp).
+  - En el sitio: barra superior (1–2 promos + "+N"), hero y banner (la principal + chips con las demás), marquesina, chips en las tarjetas, un bloque por promo en la ficha, aviso de cantidad, carrito (descuento aplicado, próxima oportunidad y envío gratis), mensaje de WhatsApp, preguntas frecuentes y Términos (una cláusula por promo). Las programadas aparecen solas al empezar y desaparecen al terminar.
 - **Productos en oferta:** precio anterior en `products.compare_at_price`.
 - **"Nuevo":** se calcula solo con `products.published_at`: un producto es nuevo durante 45 días desde que se publica (`NEW_PRODUCT_DAYS` en `src/data/business.ts`). Aparece la etiqueta "Nuevo". La sección "Drop nuevo" de la home muestra siempre los 4 últimos publicados (y el catálogo tiene el orden "Más nuevos").
 - **Categorías** (`categories`): además de nombre, imagen y orden, `size_guide` (`apparel` = guía por altura/peso, `shoes` = por largo de pie, `none` = sin guía) y `complements` (qué categorías sugerir en "Completá el look").
@@ -130,6 +135,8 @@ El plan gratis de Netlify permite sitios comerciales y corre Next.js con servido
    Para cargar los productos de ejemplo, pegá el contenido de `supabase/seed.sql` en el **SQL Editor** del proyecto.
 2. **Sitio:** en [netlify.com](https://netlify.com) → *Add new site → Import from Git* → elegí este repo. Netlify detecta Next.js solo (`netlify.toml`).
 3. **Variables** (*Site configuration → Environment variables*): `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (de *Project Settings → API Keys* en Supabase), `REVALIDATE_SECRET`, `NEXT_PUBLIC_WHATSAPP_NUMBER` y `NEXT_PUBLIC_SITE_URL` (la URL de Netlify o tu dominio).
-4. **Cambios al instante (opcional):** en Supabase → *Database → Webhooks*, creá uno para `INSERT`, `UPDATE` y `DELETE` en `products` y `categories` que haga `POST` a `https://<tu-sitio>/api/revalidate/` con el header `x-revalidate-secret`. Sin webhook, los cambios igual aparecen en hasta 1 minuto.
+   Si falta alguna (o el número de WhatsApp es el de ejemplo, o la URL apunta a localhost), **el build falla** con la lista de lo que hay que corregir: así nunca se publica un sitio cuyos pedidos no te llegan (`src/lib/env.ts`).
+4. **Panel de administración apuntando a la nube:** en `admin/.env` cambiá `SUPABASE_URL` por la URL del proyecto, `SUPABASE_SECRET_KEY` por su *secret key* (Project Settings → API Keys → Secret keys) y `SITE_URL` / `REVALIDATE_SECRET` por los del sitio publicado. El bucket de fotos `catalog-images` se crea con `db push` (es una migración).
+5. **Cambios hechos desde Studio (opcional):** el panel ya avisa al sitio al guardar, así que esto solo hace falta si editás directo en Supabase Studio. En *Database → Webhooks*, creá uno para `INSERT`, `UPDATE` y `DELETE` en `products`, `categories`, `promotions`, `shipping_zones` y `shipping_zone_areas` que haga `POST` a `https://<tu-sitio>/api/revalidate/` con el header `x-revalidate-secret`. Sin webhook, los cambios igual aparecen en hasta 1 minuto.
 
 Cada push a `main` vuelve a publicar el sitio.

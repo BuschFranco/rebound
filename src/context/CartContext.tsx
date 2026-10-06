@@ -13,7 +13,7 @@ import { cartStore } from "@/lib/cartStore";
 import { validateCart, type CartNotice } from "@/lib/cartValidation";
 import { useCatalog } from "./CatalogContext";
 import { usePromo } from "./PromoContext";
-import { computePromo, type PromoSummary } from "@/lib/promo";
+import { computeDiscounts, type PromoSummary } from "@/lib/promo";
 import type { CartLine, Product } from "@/types";
 
 type CartContextValue = {
@@ -45,7 +45,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     cartStore.getServerSnapshot,
   );
   const { products } = useCatalog();
-  const { promo: promotion } = usePromo();
+  const { promos } = usePromo();
   const [isOpen, setIsOpen] = useState(false);
 
   const { lines, notices } = useMemo(() => validateCart(stored, products), [stored, products]);
@@ -77,7 +77,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<CartContextValue>(() => {
-    const promo = computePromo(lines, promotion);
+    const promo = computeDiscounts(lines, promos);
     return {
       lines,
       notices,
@@ -93,7 +93,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       clear: cartStore.clear,
       acknowledgeNotices,
     };
-  }, [lines, notices, promotion, isOpen, open, close, addItem, acknowledgeNotices]);
+  }, [lines, notices, promos, isOpen, open, close, addItem, acknowledgeNotices]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

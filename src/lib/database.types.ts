@@ -36,15 +36,28 @@ export type Database = {
                   Relationships: [
                     
                   ]
-                },"products": {
+                },"order_intents": {
                   Row: {
-                    "active": boolean,"category_slug": string,"colors": NonNullable<Json>,"compare_at_price": number | null,"created_at": string,"description": string,"highlights": (string)[],"id": string,"images": (string)[],"name": string,"price": number,"published_at": string,"sizes": (string)[],"slug": string,"sort_order": number,"updated_at": string
+                    "created_at": string,"id": number,"items": NonNullable<Json>,"partido": string | null,"promo_label": string | null,"total": number,"units": number,"zone_name": string | null
                   }
                   Insert: {
-                    "active"?: boolean,"category_slug": string,"colors": NonNullable<Json>,"compare_at_price"?: number | null,"created_at"?: string,"description"?: string,"highlights"?: (string)[],"id"?: string,"images": (string)[],"name": string,"price": number,"published_at"?: string,"sizes": (string)[],"slug": string,"sort_order"?: number,"updated_at"?: string
+                    "created_at"?: string,"id"?: never,"items": NonNullable<Json>,"partido"?: string | null,"promo_label"?: string | null,"total": number,"units": number,"zone_name"?: string | null
                   }
                   Update: {
-                    "active"?: boolean,"category_slug"?: string,"colors"?: NonNullable<Json>,"compare_at_price"?: number | null,"created_at"?: string,"description"?: string,"highlights"?: (string)[],"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"published_at"?: string,"sizes"?: (string)[],"slug"?: string,"sort_order"?: number,"updated_at"?: string
+                    "created_at"?: string,"id"?: never,"items"?: NonNullable<Json>,"partido"?: string | null,"promo_label"?: string | null,"total"?: number,"units"?: number,"zone_name"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"products": {
+                  Row: {
+                    "active": boolean,"category_slug": string,"colors": NonNullable<Json>,"compare_at_price": number | null,"created_at": string,"description": string,"highlights": (string)[],"id": string,"images": (string)[],"name": string,"price": number,"published_at": string,"sizes": (string)[],"slug": string,"sold_out_sizes": (string)[],"sort_order": number,"updated_at": string
+                  }
+                  Insert: {
+                    "active"?: boolean,"category_slug": string,"colors": NonNullable<Json>,"compare_at_price"?: number | null,"created_at"?: string,"description"?: string,"highlights"?: (string)[],"id"?: string,"images": (string)[],"name": string,"price": number,"published_at"?: string,"sizes": (string)[],"slug": string,"sold_out_sizes"?: (string)[],"sort_order"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"category_slug"?: string,"colors"?: NonNullable<Json>,"compare_at_price"?: number | null,"created_at"?: string,"description"?: string,"highlights"?: (string)[],"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"published_at"?: string,"sizes"?: (string)[],"slug"?: string,"sold_out_sizes"?: (string)[],"sort_order"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -57,13 +70,13 @@ isOneToOne: false
                   ]
                 },"promotions": {
                   Row: {
-                    "active": boolean,"buy": number,"created_at": string,"ends_at": string,"id": string,"label": string,"pay": number,"starts_at": string
+                    "active": boolean,"banner_cta": string | null,"banner_eyebrow": string | null,"banner_image_url": string | null,"banner_text": string | null,"banner_title": string | null,"buy": number | null,"category_slugs": (string)[],"created_at": string,"ends_at": string,"id": string,"kind": string,"label": string,"min_amount": number | null,"min_units": number | null,"nth": number | null,"pay": number | null,"percent": number | null,"product_ids": (string)[],"scope": string | null,"shipping_rule": string | null,"starts_at": string
                   }
                   Insert: {
-                    "active"?: boolean,"buy": number,"created_at"?: string,"ends_at": string,"id": string,"label": string,"pay": number,"starts_at": string
+                    "active"?: boolean,"banner_cta"?: string | null,"banner_eyebrow"?: string | null,"banner_image_url"?: string | null,"banner_text"?: string | null,"banner_title"?: string | null,"buy"?: number | null,"category_slugs"?: (string)[],"created_at"?: string,"ends_at": string,"id": string,"kind"?: string,"label": string,"min_amount"?: number | null,"min_units"?: number | null,"nth"?: number | null,"pay"?: number | null,"percent"?: number | null,"product_ids"?: (string)[],"scope"?: string | null,"shipping_rule"?: string | null,"starts_at": string
                   }
                   Update: {
-                    "active"?: boolean,"buy"?: number,"created_at"?: string,"ends_at"?: string,"id"?: string,"label"?: string,"pay"?: number,"starts_at"?: string
+                    "active"?: boolean,"banner_cta"?: string | null,"banner_eyebrow"?: string | null,"banner_image_url"?: string | null,"banner_text"?: string | null,"banner_title"?: string | null,"buy"?: number | null,"category_slugs"?: (string)[],"created_at"?: string,"ends_at"?: string,"id"?: string,"kind"?: string,"label"?: string,"min_amount"?: number | null,"min_units"?: number | null,"nth"?: number | null,"pay"?: number | null,"percent"?: number | null,"product_ids"?: (string)[],"scope"?: string | null,"shipping_rule"?: string | null,"starts_at"?: string
                   }
                   Relationships: [
                     
@@ -100,13 +113,28 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"site_banners": {
+                  Row: {
+                    "cta": string | null,"eyebrow": string | null,"id": string,"image_url": string | null,"text": string | null,"title": string | null,"updated_at": string
+                  }
+                  Insert: {
+                    "cta"?: string | null,"eyebrow"?: string | null,"id": string,"image_url"?: string | null,"text"?: string | null,"title"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "cta"?: string | null,"eyebrow"?: string | null,"id"?: string,"image_url"?: string | null,"text"?: string | null,"title"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "log_order_intent":
+{ Args: { "p_items": Json,"p_partido"?: string,"p_promo_label"?: string,"p_total": number,"p_zone_name"?: string }; Returns: undefined
+                           }
           }
           Enums: {
             [_ in never]: never
