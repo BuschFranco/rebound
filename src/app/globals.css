@@ -204,3 +204,67 @@ input[type="search"]::-webkit-search-cancel-button {
     transform: none;
   }
 }
+
+/* ---------- Pantalla de carga (SplashScreen) ---------- */
+/* Sin JavaScript se va sola a los 3 s. */
+.splash {
+  animation: splash-out 0.45s ease 3s forwards;
+}
+.splash-ball {
+  animation: splash-bounce 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  transform-origin: 50% 100%;
+}
+.splash-shadow {
+  animation: splash-shadow 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.splash-bar {
+  animation: splash-bar 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes splash-bounce {
+  0%,
+  100% {
+    transform: translate(-50%, 0) scale(1, 1);
+  }
+  45% {
+    transform: translate(-50%, 52px) scale(1, 1);
+  }
+  /* Toca el piso: se aplasta un poco y vuelve a subir. */
+  50% {
+    transform: translate(-50%, 54px) scale(1.12, 0.88);
+  }
+  55% {
+    transform: translate(-50%, 52px) scale(1, 1);
+  }
+}
+@keyframes splash-shadow {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(0.55);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.8;
+  }
+}
+@keyframes splash-bar {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+@keyframes splash-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-ball,
+  .splash-shadow {
+    animation: none;
+  }
+}

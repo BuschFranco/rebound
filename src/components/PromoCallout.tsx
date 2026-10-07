@@ -6,6 +6,7 @@ import { formatPrice } from "@/lib/format";
 import { formatPromoValidity, nthUnitPrice, ordinal, promoDescription, promoPackPrice, promoUnitPrice } from "@/lib/promo";
 import type { Product, Promotion } from "@/types";
 import { PromoCountdown } from "./PromoCountdown";
+import { HighlightFree } from "./HighlightFree";
 
 /** Lo que gana el cliente con esta promo, con los números del producto que está viendo. */
 function headline(promo: Promotion, product: Product) {
@@ -37,7 +38,7 @@ function headline(promo: Promotion, product: Product) {
       <span className="text-whatsapp">Con este producto ya tenés envío gratis</span>
     ) : (
       <>
-        Sumá <span className="text-accent">{formatPrice(promo.minAmount - product.price)}</span> más a este producto y el envío es gratis
+        Sumá <span className="text-accent">{formatPrice(promo.minAmount - product.price)}</span> más a este producto y el envío es <span className="text-accent">gratis</span>
       </>
     );
   }
@@ -45,7 +46,7 @@ function headline(promo: Promotion, product: Product) {
     <span className="text-whatsapp">Con este producto ya tenés envío gratis</span>
   ) : (
     <>
-      Sumá <span className="text-accent">{promo.minUnits - 1} {promo.minUnits - 1 === 1 ? "producto" : "productos"} más</span> y el envío es gratis
+      Sumá <span className="text-accent">{promo.minUnits - 1} {promo.minUnits - 1 === 1 ? "producto" : "productos"} más</span> y el envío es <span className="text-accent">gratis</span>
     </>
   );
 }
@@ -72,7 +73,7 @@ export function PromoCallout({ product }: { product: Product }) {
             <div className="min-w-0 text-sm">
               <p className="font-semibold text-ink">{headline(promo, product)}</p>
               <p className="mt-0.5 text-xs text-muted">
-                {promoDescription(promo, categories)} Válido {formatPromoValidity(promo)}.
+                <HighlightFree text={promoDescription(promo, categories)} /> Válido {formatPromoValidity(promo)}.
               </p>
               {/* Un solo contador por recuadro, para no saturar la ficha. */}
               {i === 0 && <PromoCountdown promo={promo} tone="onDark" className="mt-3 text-ink" />}

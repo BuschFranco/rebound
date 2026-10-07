@@ -8,6 +8,7 @@ import { useCatalog } from "@/context/CatalogContext";
 import { formatPromoValidity, isDiscount, promoDescription } from "@/lib/promo";
 import type { CategoryInfo, Promotion } from "@/types";
 import { SectionHeading } from "./SectionHeading";
+import { HighlightFree } from "./HighlightFree";
 
 type QA = { q: string; a: ReactNode };
 
@@ -28,7 +29,7 @@ function buildQuestions(promos: Promotion[], categories: CategoryInfo[]): QA[] {
     q: promo.kind === "free_shipping" ? `¿Cómo funciona el ${promo.label.toLowerCase()}?` : `¿Cómo funciona el ${promo.label}?`,
     a: (
       <>
-        {promoDescription(promo, categories)} Se calcula solo en el carrito. Válido {formatPromoValidity(promo)}.
+        <HighlightFree text={promoDescription(promo, categories)} /> Se calcula solo en el carrito. Válido {formatPromoValidity(promo)}.
         {isDiscount(promo) && promos.filter(isDiscount).length > 1 && (
           <> Los descuentos no se acumulan: se aplica el que más te conviene.</>
         )}

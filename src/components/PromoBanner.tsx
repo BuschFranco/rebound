@@ -8,6 +8,7 @@ import { formatPromoValidity, promoDescription, promoHeadline } from "@/lib/prom
 import type { Promotion } from "@/types";
 import { BannerCard } from "./BannerCard";
 import { PromoCountdown } from "./PromoCountdown";
+import { HighlightFree } from "./HighlightFree";
 
 /** A dónde lleva el banner de cada promo y qué dice su botón. */
 function bannerLink(promo: Promotion): { href: string; cta: string } {
@@ -55,7 +56,9 @@ function PromoBannerCard({ promo }: { promo: Promotion }) {
     <BannerCard href={href} cta={banner.cta} image={banner.image} tint="bg-accent-2 opacity-80" align="from-black/70">
       <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/80">{banner.eyebrow}</p>
       <h2 className="mt-2 font-display text-5xl uppercase italic leading-[0.9] sm:text-6xl">{banner.title}</h2>
-      <p className="mt-3 max-w-md text-sm text-white/85 sm:text-base">{banner.text}</p>
+      <p className="mt-3 max-w-md text-sm text-white/85 sm:text-base">
+        <HighlightFree text={banner.text} />
+      </p>
       <PromoCountdown promo={promo} label="Termina en" className="mt-4 text-white" />
     </BannerCard>
   );
@@ -88,7 +91,9 @@ export function HomeBanners({ offers }: { offers: OffersBannerContent | null }) 
             <BannerCard href="/ofertas" cta={offers.cta} image={offers.image} tint="bg-gradient-brand opacity-85" align="from-black/60">
               <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/80">{offers.eyebrow}</p>
               <h2 className="mt-2 font-display text-5xl uppercase italic leading-[0.9] sm:text-6xl">{offers.title}</h2>
-              <p className="mt-3 max-w-md text-sm text-white/85 sm:text-base">{offers.text}</p>
+              <p className="mt-3 max-w-md text-sm text-white/85 sm:text-base">
+                <HighlightFree text={offers.text} />
+              </p>
             </BannerCard>
           </li>
         )}

@@ -7,6 +7,7 @@ import type { Order } from "@/lib/order";
 import { formatPromoValidity, ordinal } from "@/lib/promo";
 import type { DiscountPromotion } from "@/types";
 import { PromoCountdown } from "./PromoCountdown";
+import { HighlightFree } from "./HighlightFree";
 
 /** Qué gana el cliente con la próxima unidad, según el tipo de promo. */
 function benefit(promo: DiscountPromotion) {
@@ -42,12 +43,12 @@ export function CartPromo({ order }: { order: Order }) {
   ) : freeShippingNext?.missingUnits ? (
     <>
       🚚 Sumá <strong className="text-accent">{freeShippingNext.missingUnits} {freeShippingNext.missingUnits === 1 ? "producto" : "productos"} más</strong>{" "}
-      <span className="text-muted">y el envío es gratis.</span>
+      <span className="text-muted">y el envío es <span className="font-semibold text-accent">gratis</span>.</span>
     </>
   ) : freeShippingNext?.missingAmount && shipping.status !== "ok" ? (
     <>
       🚚 Sumá <strong className="text-accent">{formatPrice(freeShippingNext.missingAmount)}</strong>{" "}
-      <span className="text-muted">más y el envío es gratis.</span>
+      <span className="text-muted">más y el envío es <span className="font-semibold text-accent">gratis</span>.</span>
     </>
   ) : null;
 
@@ -65,7 +66,7 @@ export function CartPromo({ order }: { order: Order }) {
         <p>
           Sumá <strong className="text-accent">{next.units} {next.units === 1 ? "producto" : "productos"} más</strong>
           <span className="text-muted">
-            {where} y {benefit(next.promo)}
+            <HighlightFree text={`${where} y ${benefit(next.promo)}`} />
             {/* Otra promo distinta de la aplicada: no se suman, se usa la que más ahorre. */}
             {promo.applied && next.promo.id !== promo.applied.id ? ", si te ahorra más que la actual" : ""}.
           </span>
