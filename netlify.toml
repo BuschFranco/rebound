@@ -7,3 +7,6 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Valores públicos (no son claves): aparecen en el README, los .env.example y el HTML del sitio.
+  # Sin esto, el escáner de secretos de Netlify frena el deploy. Las claves reales se siguen revisando.
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,NEXT_PUBLIC_SITE_URL"
