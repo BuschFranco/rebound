@@ -14,6 +14,7 @@ import { getCatalog } from "@/lib/catalog";
 import { PromoProvider } from "@/context/PromoContext";
 import { BUSINESS } from "@/data/business";
 import { JsonLd } from "@/components/JsonLd";
+import { GoogleTagManagerNoScript, GoogleTagManagerScript } from "@/components/GoogleTagManager";
 import { SITE_DESCRIPTION } from "@/lib/seo";
 import { absoluteUrl, SITE_URL } from "@/lib/site";
 import "lenis/dist/lenis.css";
@@ -65,7 +66,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
   return (
     <html lang="es-AR" className={`${inter.variable} ${anton.variable} h-full antialiased`}>
+      <GoogleTagManagerScript />
       <body className="flex min-h-full flex-col font-sans">
+        <GoogleTagManagerNoScript />
         <SplashScreen />
         <JsonLd data={SITE_JSON_LD} />
         <SmoothScroll>
