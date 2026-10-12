@@ -34,9 +34,9 @@ values
   ('r19', 'bolso-gym-duffle', 'Bolso Gym Duffle', 'Bolso deportivo con compartimento para zapatillas, correa regulable y tela resistente al agua.', 'accesorios', 39999, 47999, array['https://images.unsplash.com/photo-1708622833152-924c6e364138?auto=format&fit=crop&w=900&q=80']::text[], array['Único']::text[], '[{"name":"Negro","hex":"#111111"}]'::jsonb, array['Compartimento separado para zapatillas', 'Tela resistente al agua', 'Correa regulable y acolchada']::text[], now() - interval '255 days', 19);
 -- Zonas de envío (precios de EJEMPLO: ajustalos en Studio → Table Editor → shipping_zones).
 insert into public.shipping_zones (id, name, price, free_from, eta_label, sort_order) values
-  ('caba', 'CABA', 3500, 120000, '24 a 48 h hábiles', 1),
-  ('gba-1', 'GBA 1er cordón', 4500, 150000, '24 a 48 h hábiles', 2),
-  ('gba-2', 'GBA 2do cordón', 5500, 180000, '48 a 72 h hábiles', 3),
+  ('caba', 'CABA', 7000, 120000, '24 a 48 h hábiles', 1),
+  ('gba-1', 'GBA 1er cordón', 7000, 150000, '24 a 48 h hábiles', 2),
+  ('gba-2', 'GBA 2do cordón', 7000, 180000, '48 a 72 h hábiles', 3),
   ('gba-3', 'GBA 3er cordón y La Plata', 7000, null, '48 a 72 h hábiles', 4),
   ('interior-pba', 'Interior de Buenos Aires', 9500, null, '3 a 5 días hábiles', 5);
 
