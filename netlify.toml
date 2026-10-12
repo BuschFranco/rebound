@@ -10,3 +10,6 @@
   # Valores públicos (no son claves): aparecen en el README, los .env.example y el HTML del sitio.
   # Sin esto, el escáner de secretos de Netlify frena el deploy. Las claves reales se siguen revisando.
   SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,NEXT_PUBLIC_SITE_URL"
+  # La caché de compilación de Turbopack guarda las variables de entorno, pero no se publica:
+  # queda en el servidor de build para acelerar el próximo deploy. Lo publicado se sigue revisando.
+  SECRETS_SCAN_OMIT_PATHS = ".netlify/.next/cache/**"
