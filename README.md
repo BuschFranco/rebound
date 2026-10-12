@@ -2,21 +2,37 @@
 
 Tienda de indumentaria y zapatillas de basket hecha con Next.js 16 (App Router, Tailwind CSS 4) y **Supabase** (PostgreSQL) como base de datos del catálogo. Estética oscura con acentos naranja/morado. El cliente arma su carrito (talle, color y cantidad) y al tocar **Comprar por WhatsApp** se abre un chat con el pedido ya escrito. El envío se coordina por chat y se paga al recibir.
 
-## Puesta en marcha
+**Tienda publicada:** https://reboundstore.netlify.app
 
-Requisitos: Node 22 y Docker (para la base local).
+## Cómo está armado hoy
+
+| Pieza | Dónde | Notas |
+| --- | --- | --- |
+| Sitio (Next.js) | **Netlify** → https://reboundstore.netlify.app | Se publica solo con cada push a `main` (`netlify.toml`). |
+| Base de datos y fotos | **Supabase en la nube** (proyecto `ryzwqsbbfqjzcyqykglp`) | Catálogo, promos, envíos, banners, pedidos y el bucket `catalog-images`. |
+| Panel de administración | **Tu PC** (`admin/iniciar.bat`) | Escribe directo en la base de la nube y avisa al sitio publicado para que se actualice al instante. |
+| Código | GitHub → `BuschFranco/rebound` | |
+
+> ⚠️ **Hay una sola base para todo**: el sitio publicado, el sitio en tu PC (`npm run dev`) y el panel usan la misma base de Supabase. Lo que cambies o borres en el panel impacta en la tienda real; no hay un entorno de prueba aparte. Los pedidos de prueba que hagas en tu PC también quedan registrados.
+
+## Puesta en marcha (en tu PC)
+
+Requisitos: Node 22. Docker solo si querés usar la base local de respaldo (ver más abajo).
 
 ```bash
 npm install
-cp .env.local.example .env.local   # y completá tu número de WhatsApp
-npm run db:start                   # levanta Supabase en Docker y carga los productos de ejemplo
+cp .env.local.example .env.local   # completá las variables (ver "Configuración")
 npm run dev
 ```
 
-- Sitio: http://localhost:3000 (`npm run dev` avisa en amarillo si la base no responde, por ejemplo con Docker apagado).
-- Panel de la base (Supabase Studio): http://127.0.0.1:54323 → **Table Editor** para editar productos y categorías.
+- Sitio: http://localhost:3000. `npm run dev` avisa en amarillo si la base no responde.
+- Base: [supabase.com](https://supabase.com) → tu proyecto → **Table Editor** (aunque lo normal es editar todo desde el panel).
 
-### Comandos de la base
+### Base local con Docker (opcional, respaldo)
+
+Para probar sin tocar la base real: poné en `.env.local` (y en `admin/.env`) `SUPABASE_URL=http://127.0.0.1:54321` con las claves locales que muestra `npx supabase status`, y levantá la base con `npm run db:start`. Studio local: http://127.0.0.1:54323. Para volver a la nube, restaurá la URL y las claves del proyecto.
+
+### Comandos de la base local (Docker)
 
 | Comando | Qué hace |
 | --- | --- |
@@ -85,9 +101,11 @@ Cómo abrirlo:
 | --- | --- |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Número que recibe los pedidos, formato internacional sin `+` (ej. `5491112345678`). |
 | `NEXT_PUBLIC_SITE_URL` | URL pública del sitio; se usa para los links a cada producto dentro del mensaje. Si está vacía, se usa el dominio actual. |
-| `SUPABASE_URL` | URL de Supabase (local: `http://127.0.0.1:54321`). |
-| `SUPABASE_PUBLISHABLE_KEY` | Clave publishable de Supabase (solo lectura gracias a RLS). Local: la muestra `npx supabase status`. |
-| `REVALIDATE_SECRET` | Clave para `/api/revalidate/`. Larga y aleatoria. |
+| `SUPABASE_URL` | URL del proyecto de Supabase: `https://ryzwqsbbfqjzcyqykglp.supabase.co` (local con Docker: `http://127.0.0.1:54321`). |
+| `SUPABASE_PUBLISHABLE_KEY` | Clave **publishable** del proyecto (Project Settings → API Keys). Es pública: solo permite leer gracias a RLS. |
+| `REVALIDATE_SECRET` | Clave para `/api/revalidate/`. Larga y aleatoria; **la misma** en `.env.local`, en `admin/.env` y en Netlify. |
+
+El panel tiene su propio archivo, `admin/.env` (no se sube a git): `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (la *secret key* del proyecto, acceso total: nunca en el sitio ni en Netlify), `SITE_URL=https://reboundstore.netlify.app` y el mismo `REVALIDATE_SECRET`.
 
 ## Dónde tocar
 
@@ -122,21 +140,40 @@ Páginas incluidas: `/terminos`, `/privacidad`, `/cambios-y-devoluciones`, `/env
 
 Antes de lanzar también conviene: inscripción en ARCA (monotributo o RI) e Ingresos Brutos (ARBA/AGIP), registrar la marca en el INPI, inscribir la base de datos de clientes ante la AAIP, reemplazar las fotos de ejemplo por fotos propias y hacer revisar los textos legales por un abogado.
 
-## Deploy (Netlify + Supabase)
+## Producción (Netlify + Supabase)
 
-El plan gratis de Netlify permite sitios comerciales y corre Next.js con servidor (ISR, imágenes y `/api/revalidate`).
+Ya está configurado. El plan gratis de Netlify permite sitios comerciales y corre Next.js con servidor (APIs del carrito, refresco del catálogo e imágenes). GitHub Pages no sirve: solo publica archivos fijos, sin servidor. El plan gratis de Vercel es solo para uso no comercial.
 
-1. **Base en la nube:** creá un proyecto gratis en [supabase.com](https://supabase.com) y subí las tablas y datos:
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref <tu-project-ref>
-   npx supabase db push            # crea las tablas (migrations)
-   ```
-   Para cargar los productos de ejemplo, pegá el contenido de `supabase/seed.sql` en el **SQL Editor** del proyecto.
-2. **Sitio:** en [netlify.com](https://netlify.com) → *Add new site → Import from Git* → elegí este repo. Netlify detecta Next.js solo (`netlify.toml`).
-3. **Variables** (*Site configuration → Environment variables*): `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (de *Project Settings → API Keys* en Supabase), `REVALIDATE_SECRET`, `NEXT_PUBLIC_WHATSAPP_NUMBER` y `NEXT_PUBLIC_SITE_URL` (la URL de Netlify o tu dominio).
-   Si falta alguna (o el número de WhatsApp es el de ejemplo, o la URL apunta a localhost), **el build falla** con la lista de lo que hay que corregir: así nunca se publica un sitio cuyos pedidos no te llegan (`src/lib/env.ts`).
-4. **Panel de administración apuntando a la nube:** en `admin/.env` cambiá `SUPABASE_URL` por la URL del proyecto, `SUPABASE_SECRET_KEY` por su *secret key* (Project Settings → API Keys → Secret keys) y `SITE_URL` / `REVALIDATE_SECRET` por los del sitio publicado. El bucket de fotos `catalog-images` se crea con `db push` (es una migración).
-5. **Cambios hechos desde Studio (opcional):** el panel ya avisa al sitio al guardar, así que esto solo hace falta si editás directo en Supabase Studio. En *Database → Webhooks*, creá uno para `INSERT`, `UPDATE` y `DELETE` en `products`, `categories`, `promotions`, `shipping_zones` y `shipping_zone_areas` que haga `POST` a `https://<tu-sitio>/api/revalidate/` con el header `x-revalidate-secret`. Sin webhook, los cambios igual aparecen en hasta 1 minuto.
+### Publicar cambios del código
 
-Cada push a `main` vuelve a publicar el sitio.
+Cada push a `main` publica una versión nueva en Netlify (tarda un par de minutos; se ve en *Deploys*). Si falta una variable, el número de WhatsApp es el de ejemplo o la URL apunta a localhost, **el build falla** con la lista de lo que hay que corregir y queda online la versión anterior (`src/lib/env.ts`).
+
+### Variables en Netlify
+
+*Site configuration → Environment variables*:
+
+| Variable | Valor |
+| --- | --- |
+| `SUPABASE_URL` | `https://ryzwqsbbfqjzcyqykglp.supabase.co` |
+| `SUPABASE_PUBLISHABLE_KEY` | la *publishable key* del proyecto |
+| `REVALIDATE_SECRET` | la misma que en `.env.local` y `admin/.env` |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | el número que recibe los pedidos (sin `+`, espacios ni guiones) |
+| `NEXT_PUBLIC_SITE_URL` | `https://reboundstore.netlify.app` (o tu dominio propio, si conectás uno) |
+
+La *secret key* de Supabase y la contraseña de la base **no** van en Netlify. Después de cambiar una variable: *Deploys → Trigger deploy*.
+
+### Cambios en la base (migraciones)
+
+Las tablas se definen en `supabase/migrations/`. Si se agrega una migración nueva, hay que aplicarla en la nube (pide la contraseña de la base; la corrés vos):
+
+```bash
+npx supabase db push --db-url "postgresql://postgres:TU_CONTRASEÑA@db.ryzwqsbbfqjzcyqykglp.supabase.co:5432/postgres"
+```
+
+- Si no conecta (la conexión directa es solo IPv6), usá la cadena del **Session pooler** del botón *Connect* de Supabase.
+- `--include-seed` vuelve a cargar los datos de ejemplo de `supabase/seed.sql`: **no** lo uses en una base con datos reales.
+- Después de cambiar tablas: `npm run db:types` (regenera `src/lib/database.types.ts`; con la base local levantada).
+
+### Cambios hechos desde Supabase Studio (opcional)
+
+El panel ya avisa al sitio al guardar. Si editás directo en Studio, los cambios aparecen en hasta 1 minuto; para que sea al instante, en *Database → Webhooks* creá uno para `INSERT`, `UPDATE` y `DELETE` en `products`, `categories`, `promotions`, `site_banners`, `shipping_zones` y `shipping_zone_areas` que haga `POST` a `https://reboundstore.netlify.app/api/revalidate/` con el header `x-revalidate-secret`.
