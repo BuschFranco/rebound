@@ -79,10 +79,21 @@ export default async function Home() {
             <br />
             <span className="pr-4 text-accent">otro nivel</span>
           </h1>
-          <p className="mt-6 max-w-md text-base text-white/80 sm:text-lg">
-            Indumentaria y zapatillas de basket. Armá tu pedido, mandalo por WhatsApp y pagá recién
-            cuando lo recibís.
+          <p className="mt-6 max-w-lg text-base text-white/80 sm:text-lg">
+            <span className="font-semibold text-white">Lo pedís hoy y lo tenés ayer.</span>{" "}
+            Sin tarjeta ni registro: pagás recién cuando lo recibís.
           </p>
+          <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold uppercase tracking-widest text-white/90 sm:text-sm">
+            <li className="flex items-center gap-2">
+              <WhatsAppIcon className="size-4 text-accent" /> Pedido en 1 minuto
+            </li>
+            <li className="flex items-center gap-2">
+              <TruckIcon className="size-4 text-accent" /> Llega en {DELIVERY.label}
+            </li>
+            <li className="flex items-center gap-2">
+              <CashIcon className="size-4 text-accent" /> Pagás al recibir
+            </li>
+          </ul>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/catalogo"
