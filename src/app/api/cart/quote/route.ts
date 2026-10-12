@@ -55,6 +55,10 @@ async function logOrderIntent(order: ReturnType<typeof buildOrder>) {
     p_promo_label: [order.discountLabel, order.freeShippingLabel].filter(Boolean).join(" + ") || undefined,
     p_zone_name: shipping.status === "ok" ? shipping.zoneName : undefined,
     p_partido: shipping.status === "unset" ? undefined : shipping.location.partido || shipping.location.provincia,
+    // Por separado, para registrar la venta en el panel con lo cobrado por productos (sin envío).
+    p_subtotal: order.promo.subtotal,
+    p_discount: order.promo.discount,
+    p_shipping: shipping.status === "ok" ? shipping.cost : undefined,
   });
   if (error) console.error("No se pudo registrar el pedido:", error.message);
 }

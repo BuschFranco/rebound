@@ -127,9 +127,34 @@ export function searchProducts(products: Product[], categories: CategoryInfo[], 
     .map((x) => x.p);
 }
 
-/** Talles que se pueden pedir (los que no están agotados). */
-export function availableSizes(product: Product) {
-  return product.sizes.filter((s) => !product.soldOutSizes.includes(s));
+export type VariantStock = "out" | "last" | "ok";
+
+/** Stock de una variante: agotada, última unidad o disponible. */
+export function variantStock(product: Product, color: string, size: string): VariantStock {
+  if (product.soldOutSizes.includes(size)) return "out";
+  if (!product.stock.tracked) return "ok";
+  const qty = product.stock.low[`${color}|${size}`];
+  return qty === undefined ? "ok" : qty <= 0 ? "out" : "last";
+}
+
+/** Unidades que se pueden pedir de una variante (null = sin límite conocido). */
+export function variantLimit(product: Product, color: string, size: string): number | null {
+  const stock = variantStock(product, color, size);
+  return stock === "out" ? 0 : stock === "last" ? 1 : null;
+}
+
+/**
+ * Talles que se pueden pedir. Con color elegido, los de ese color; sin color, los que tienen
+ * stock en al menos uno.
+ */
+export function availableSizes(product: Product, color?: string) {
+  const colors = color ? [color] : product.colors.map((c) => c.name);
+  return product.sizes.filter((s) => colors.some((c) => variantStock(product, c, s) !== "out"));
+}
+
+/** Colores con stock en al menos un talle. */
+export function availableColors(product: Product) {
+  return product.colors.filter((c) => product.sizes.some((s) => variantStock(product, c.name, s) !== "out"));
 }
 
 export function getMaxDiscount(products: Product[]) {

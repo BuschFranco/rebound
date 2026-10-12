@@ -1,6 +1,7 @@
 """REBOUND · Panel de administración.
 
-Edita el catálogo de Supabase (productos, categorías, promociones y zonas de envío) y avisa al sitio
+Edita el catálogo de Supabase (productos, stock, categorías, promociones y zonas de envío), registra ventas,
+calcula la ganancia y avisa al sitio
 para que muestre los cambios al instante. Se abre con admin/iniciar.bat o `python admin/app.py`.
 """
 
@@ -20,8 +21,10 @@ from views.banners import BannersView  # noqa: E402
 from views.categories import CategoriesView  # noqa: E402
 from views.orders import OrdersView  # noqa: E402
 from views.products import ProductsView  # noqa: E402
+from views.profit import ProfitView  # noqa: E402
 from views.promotions import PromotionsView  # noqa: E402
 from views.shipping import ShippingView  # noqa: E402
+from views.stock import StockView  # noqa: E402
 from widgets import (ACCENT, ACCENT_HOVER, DANGER, LINE, MUTED, OK, SURFACE, SURFACE_2, Tasks,  # noqa: E402
                      ThumbCache, ghost_button)
 
@@ -58,8 +61,9 @@ class AdminApp(ctk.CTk):
                                    segmented_button_selected_hover_color=ACCENT_HOVER, command=self._tab_changed)
         self.tabs.pack(fill="both", expand=True, padx=14, pady=(4, 0))
         self.views = {}
-        for name, cls in (("Productos", ProductsView), ("Categorías", CategoriesView),
-                          ("Promociones", PromotionsView), ("Banners", BannersView), ("Envíos", ShippingView), ("Pedidos", OrdersView)):
+        for name, cls in (("Productos", ProductsView), ("Stock", StockView), ("Categorías", CategoriesView),
+                          ("Promociones", PromotionsView), ("Banners", BannersView), ("Envíos", ShippingView),
+                          ("Pedidos", OrdersView), ("Ganancias", ProfitView)):
             tab = self.tabs.add(name)
             view = cls(tab, self)
             view.pack(fill="both", expand=True)
@@ -84,6 +88,11 @@ class AdminApp(ctk.CTk):
         # Las categorías alimentan el desplegable de productos.
         if isinstance(view, CategoriesView):
             self.refresh_categories()
+
+    def stock_changed(self):
+        """Una compra, venta o ajuste cambia el stock, la ganancia y los avisos de la lista de productos."""
+        for name in ("Stock", "Pedidos", "Ganancias", "Productos"):
+            self.views[name].load()
 
     def refresh_categories(self):
         self.tasks.run(self.api.categories, self.views["Productos"].set_categories)

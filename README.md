@@ -50,7 +50,18 @@ App de escritorio en Python (CustomTkinter) para manejar todo lo que está en la
 - **Promociones:** crear y eliminar promos de tres tipos, con fechas de inicio y fin (hora de Argentina): **Llevá N, pagá M** (3x2), **descuento en la X unidad** (del mismo producto o en categorías elegidas, ej. 2da al 50%) y **envío gratis** (en productos elegidos, desde un monto o llevando X unidades). La etiqueta se arma sola. Avisa si dos descuentos se superponen. Cada promo tiene su **banner en la home** (línea superior, título, texto, botón e imagen).
 - **Banners:** textos e imagen del banner de ofertas de la home. En los dos casos, un campo vacío usa el texto automático (se ve en gris en el campo) y se pueden usar variables: `{etiqueta}` y `{vigencia}` en promos, `{descuento}` y `{cantidad}` en ofertas (`src/lib/banners.ts`, tabla `site_banners`).
 - **Envíos:** zonas con costo, envío gratis, demora y las provincias/partidos que cubren (elegidos por nombre, vía Georef).
-- **Pedidos:** lo que se envió por WhatsApp en los últimos 7/30/90 días (pedidos, unidades, monto, productos y talles más pedidos). Se registra de forma anónima en la tabla `order_intents` a través de la función `log_order_intent` (el sitio solo puede insertar, no leer); no guarda nombre, teléfono ni dirección.
+- **Stock:** unidades por **color y talle** de cada producto. **Cargar compra** (fecha, costo por unidad, proveedor y cantidades) y **Ajustar / contar** (rotura, pérdida o conteo, con motivo). Historial de movimientos y filtro "Solo con faltantes".
+- **Pedidos:** los pedidos que llegan por WhatsApp (se registran de forma anónima en `order_intents` a través de `log_order_intent`: el sitio solo puede insertar, no leer, y no guarda nombre, teléfono ni dirección). Cada uno se marca **Vendido** (abre la venta precargada con lo cobrado por productos, editable si en el chat cambió algo) o **No se concretó**. **+ Venta manual** para ventas por fuera de la web. Las ventas se pueden **anular** (el stock vuelve).
+- **Ganancias:** facturado, costo de lo vendido, ganancia, margen e **inflación del período** (7/30/90 días, año o todo); capital en stock; tabla por producto con margen, **margen con la promo vigente** (peor caso), **costo de reposición** ajustado por inflación y días sin vender; y un **simulador** ("compro a $10.000, vendo a $20.000: ¿está bien?").
+
+#### Stock y ganancias: cómo se calcula
+
+- **Stock:** suma de los movimientos de cada variante (tabla privada `inventory_movements`: compras, ventas, ajustes y devoluciones). Un producto **empieza a controlarse con su primera compra**; antes funciona como siempre (talles agotados a mano). Una vez controlado, toda variante sin unidades cuenta como 0.
+- **En la web:** la base mantiene `products.stock_status`, que solo dice qué variantes tienen **0** (se ven agotadas: talle tachado para ese color, color atenuado si no queda ninguno) o **1** ("¡Último disponible!" y no deja pedir más de 1). Nunca publica cantidades ni costos. El carrito y el servidor también lo validan.
+- **Costo:** promedio ponderado de lo que pagaste por las unidades que tenés (comprar 10 a $10.000 y 10 a $12.000 deja el costo en $11.000). Cada venta guarda el costo de ese momento.
+- **Margen** = ganancia sobre el precio de venta; **markup** = sobre el costo. Saludable desde 40 %, justo desde 25 % (`HEALTHY_MARGIN` / `FAIR_MARGIN` en `admin/inventory.py`).
+- **Inflación:** IPC mensual de INDEC desde [ArgentinaDatos](https://api.argentinadatos.com/v1/finanzas/indices/inflacion), guardado un día en `admin/.cache/`. Los meses sin publicar se proyectan con el último dato (marcados con \*). **Ganancia real** = lo cobrado menos lo que costaría reponer lo vendido.
+- Las ventas (tabla `sales`) y las compras se registran con funciones de la base que hacen todo junto o nada (`record_sale`, `cancel_sale`, `record_purchase`, `adjust_stock`), ejecutables solo con la secret key.
 
 Cómo abrirlo:
 

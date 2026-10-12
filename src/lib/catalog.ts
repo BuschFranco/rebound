@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { BannerCopy, Catalog, CategoryInfo, Product, ProductColor, Promotion, ShippingZone, SizeGuideKind } from "@/types";
+import type { BannerCopy, Catalog, CategoryInfo, Product, ProductColor, ProductStock, Promotion, ShippingZone, SizeGuideKind } from "@/types";
 import type { Database } from "./database.types";
 import { NEW_PRODUCT_DAYS } from "@/data/business";
 import { createCatalogClient } from "./supabase";
@@ -45,11 +45,23 @@ function toProduct(row: ProductRow, now: number): Product {
     images: row.images,
     sizes: row.sizes,
     soldOutSizes: row.sold_out_sizes ?? [],
+    stock: toStock(row.stock_status),
     colors: toColors(row.colors),
     highlights: row.highlights,
     publishedAt,
     isNew: now - publishedAt < NEW_PRODUCT_MS,
   };
+}
+
+function toStock(value: unknown): ProductStock {
+  const v = (value && typeof value === "object" ? value : {}) as { tracked?: unknown; low?: unknown };
+  const low: Record<string, number> = {};
+  if (v.tracked === true && v.low && typeof v.low === "object") {
+    for (const [key, qty] of Object.entries(v.low as Record<string, unknown>)) {
+      if (typeof qty === "number") low[key] = qty;
+    }
+  }
+  return { tracked: v.tracked === true, low };
 }
 
 /** Textos del banner: los vacíos quedan en null (se usa el texto automático). */

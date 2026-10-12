@@ -36,28 +36,59 @@ export type Database = {
                   Relationships: [
                     
                   ]
-                },"order_intents": {
+                },"inventory_movements": {
                   Row: {
-                    "created_at": string,"id": number,"items": NonNullable<Json>,"partido": string | null,"promo_label": string | null,"total": number,"units": number,"zone_name": string | null
+                    "color": string,"created_at": string,"happened_at": string,"id": number,"kind": string,"note": string | null,"product_id": string,"quantity": number,"sale_id": number | null,"size": string,"unit_cost": number | null
                   }
                   Insert: {
-                    "created_at"?: string,"id"?: never,"items": NonNullable<Json>,"partido"?: string | null,"promo_label"?: string | null,"total": number,"units": number,"zone_name"?: string | null
+                    "color": string,"created_at"?: string,"happened_at"?: string,"id"?: never,"kind": string,"note"?: string | null,"product_id": string,"quantity": number,"sale_id"?: number | null,"size": string,"unit_cost"?: number | null
                   }
                   Update: {
-                    "created_at"?: string,"id"?: never,"items"?: NonNullable<Json>,"partido"?: string | null,"promo_label"?: string | null,"total"?: number,"units"?: number,"zone_name"?: string | null
+                    "color"?: string,"created_at"?: string,"happened_at"?: string,"id"?: never,"kind"?: string,"note"?: string | null,"product_id"?: string,"quantity"?: number,"sale_id"?: number | null,"size"?: string,"unit_cost"?: number | null
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "inventory_movements_product_id_fkey"
+      columns: ["product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "inventory_movements_sale_id_fkey"
+      columns: ["sale_id"]
+isOneToOne: false
+      referencedRelation: "sales"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"order_intents": {
+                  Row: {
+                    "created_at": string,"discount": number | null,"id": number,"items": NonNullable<Json>,"partido": string | null,"promo_label": string | null,"sale_id": number | null,"shipping": number | null,"status": string,"subtotal": number | null,"total": number,"units": number,"zone_name": string | null
+                  }
+                  Insert: {
+                    "created_at"?: string,"discount"?: number | null,"id"?: never,"items": NonNullable<Json>,"partido"?: string | null,"promo_label"?: string | null,"sale_id"?: number | null,"shipping"?: number | null,"status"?: string,"subtotal"?: number | null,"total": number,"units": number,"zone_name"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"discount"?: number | null,"id"?: never,"items"?: NonNullable<Json>,"partido"?: string | null,"promo_label"?: string | null,"sale_id"?: number | null,"shipping"?: number | null,"status"?: string,"subtotal"?: number | null,"total"?: number,"units"?: number,"zone_name"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "order_intents_sale_id_fkey"
+      columns: ["sale_id"]
+isOneToOne: false
+      referencedRelation: "sales"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"products": {
                   Row: {
-                    "active": boolean,"category_slug": string,"colors": NonNullable<Json>,"compare_at_price": number | null,"created_at": string,"description": string,"highlights": (string)[],"id": string,"images": (string)[],"name": string,"price": number,"published_at": string,"sizes": (string)[],"slug": string,"sold_out_sizes": (string)[],"sort_order": number,"updated_at": string
+                    "active": boolean,"category_slug": string,"colors": NonNullable<Json>,"compare_at_price": number | null,"created_at": string,"description": string,"highlights": (string)[],"id": string,"images": (string)[],"name": string,"price": number,"published_at": string,"sizes": (string)[],"slug": string,"sold_out_sizes": (string)[],"sort_order": number,"stock_status": NonNullable<Json>,"updated_at": string
                   }
                   Insert: {
-                    "active"?: boolean,"category_slug": string,"colors": NonNullable<Json>,"compare_at_price"?: number | null,"created_at"?: string,"description"?: string,"highlights"?: (string)[],"id"?: string,"images": (string)[],"name": string,"price": number,"published_at"?: string,"sizes": (string)[],"slug": string,"sold_out_sizes"?: (string)[],"sort_order"?: number,"updated_at"?: string
+                    "active"?: boolean,"category_slug": string,"colors": NonNullable<Json>,"compare_at_price"?: number | null,"created_at"?: string,"description"?: string,"highlights"?: (string)[],"id"?: string,"images": (string)[],"name": string,"price": number,"published_at"?: string,"sizes": (string)[],"slug": string,"sold_out_sizes"?: (string)[],"sort_order"?: number,"stock_status"?: NonNullable<Json>,"updated_at"?: string
                   }
                   Update: {
-                    "active"?: boolean,"category_slug"?: string,"colors"?: NonNullable<Json>,"compare_at_price"?: number | null,"created_at"?: string,"description"?: string,"highlights"?: (string)[],"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"published_at"?: string,"sizes"?: (string)[],"slug"?: string,"sold_out_sizes"?: (string)[],"sort_order"?: number,"updated_at"?: string
+                    "active"?: boolean,"category_slug"?: string,"colors"?: NonNullable<Json>,"compare_at_price"?: number | null,"created_at"?: string,"description"?: string,"highlights"?: (string)[],"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"published_at"?: string,"sizes"?: (string)[],"slug"?: string,"sold_out_sizes"?: (string)[],"sort_order"?: number,"stock_status"?: NonNullable<Json>,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -80,6 +111,25 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"sales": {
+                  Row: {
+                    "cancelled_at": string | null,"cost": number,"created_at": string,"id": number,"items": NonNullable<Json>,"note": string | null,"order_intent_id": number | null,"revenue": number,"sold_at": string,"source": string
+                  }
+                  Insert: {
+                    "cancelled_at"?: string | null,"cost": number,"created_at"?: string,"id"?: never,"items": NonNullable<Json>,"note"?: string | null,"order_intent_id"?: number | null,"revenue": number,"sold_at"?: string,"source": string
+                  }
+                  Update: {
+                    "cancelled_at"?: string | null,"cost"?: number,"created_at"?: string,"id"?: never,"items"?: NonNullable<Json>,"note"?: string | null,"order_intent_id"?: number | null,"revenue"?: number,"sold_at"?: string,"source"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "sales_order_intent_id_fkey"
+      columns: ["order_intent_id"]
+isOneToOne: false
+      referencedRelation: "order_intents"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"shipping_zone_areas": {
                   Row: {
@@ -132,8 +182,23 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "log_order_intent":
-{ Args: { "p_items": Json,"p_partido"?: string,"p_promo_label"?: string,"p_total": number,"p_zone_name"?: string }; Returns: undefined
+            "adjust_stock":
+{ Args: { "p": Json }; Returns: undefined
+                           },
+"cancel_sale":
+{ Args: { "p_id": number }; Returns: undefined
+                           },
+"compute_stock_status":
+{ Args: { "p_colors": Json,"p_id": string,"p_sizes": (string)[] }; Returns: Json
+                           },
+"log_order_intent":
+{ Args: { "p_discount"?: number,"p_items": Json,"p_partido"?: string,"p_promo_label"?: string,"p_shipping"?: number,"p_subtotal"?: number,"p_total": number,"p_zone_name"?: string }; Returns: undefined
+                           },
+"record_purchase":
+{ Args: { "p": Json }; Returns: undefined
+                           },
+"record_sale":
+{ Args: { "p": Json }; Returns: number
                            }
           }
           Enums: {

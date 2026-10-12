@@ -62,6 +62,8 @@ export type ProductColor = {
   hex: string;
 };
 
+export type ProductStock = { tracked: boolean; low: Record<string, number> };
+
 export type Product = {
   id: string;
   slug: string;
@@ -75,6 +77,11 @@ export type Product = {
   /** Talles sin stock: se muestran tachados y no se pueden pedir. */
   soldOutSizes: string[];
   colors: ProductColor[];
+  /**
+   * Control de stock (lo mantiene la base). Sin control (`tracked: false`) vale solo soldOutSizes.
+   * Con control, `low` lista las variantes "Color|Talle" que tienen 0 o 1 unidad; el resto tiene 2 o más.
+   */
+  stock: ProductStock;
   /** Fecha de publicación (ms). */
   publishedAt: number;
   /** Publicado hace menos de NEW_PRODUCT_DAYS días (se calcula, no se carga a mano). */

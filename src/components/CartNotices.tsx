@@ -4,7 +4,7 @@ import { formatPrice } from "@/lib/format";
 const REMOVED_TEXT = {
   unavailable: "ya no está disponible",
   size: "ya no tiene el talle que elegiste",
-  soldOut: "se agotó el talle que elegiste",
+  soldOut: "se agotó el talle o color que elegiste",
   color: "ya no tiene el color que elegiste",
 } as const;
 
@@ -21,6 +21,11 @@ export function CartNotices({ notices, title = "Actualizamos tu carrito" }: { no
               <strong className="text-ink">{n.name}</strong> {n.to > n.from ? "subió" : "bajó"} de{" "}
               <span className="line-through">{formatPrice(n.from)}</span> a{" "}
               <strong className={n.to > n.from ? "text-accent" : "text-whatsapp"}>{formatPrice(n.to)}</strong>.
+            </li>
+          ) : n.type === "limited" ? (
+            <li key={`l-${n.key}`}>
+              De <strong className="text-ink">{n.name}</strong> queda{n.quantity === 1 ? "" : "n"} solo{" "}
+              <strong className="text-accent">{n.quantity}</strong> en ese talle y color: ajustamos la cantidad.
             </li>
           ) : (
             <li key={`r-${n.key}`}>

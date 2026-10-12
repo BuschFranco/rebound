@@ -13,7 +13,7 @@ import type { CartNotice } from "@/lib/cartValidation";
 import type { SavedAddress } from "@/types";
 import { addressStore } from "@/lib/addressStore";
 import { buildOrder, type Order } from "@/lib/order";
-import { getCartSuggestions } from "@/lib/products";
+import { getCartSuggestions, variantLimit } from "@/lib/products";
 import { buildOrderMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { CartNotices } from "./CartNotices";
 import { CartPromo } from "./CartPromo";
@@ -202,8 +202,9 @@ export function CartDrawer() {
                           <span className="w-6 text-center tabular-nums">{item.quantity}</span>
                           <button
                             type="button"
-                            className="px-2.5 py-1"
+                            className="px-2.5 py-1 disabled:opacity-30"
                             onClick={() => updateQty(item.key, item.quantity + 1)}
+                            disabled={item.quantity >= (variantLimit(item.product, item.color, item.size) ?? Infinity)}
                             aria-label="Sumar"
                           >
                             +

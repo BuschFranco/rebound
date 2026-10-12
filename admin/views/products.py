@@ -140,6 +140,14 @@ class ProductsView(EditorView):
             if p.get("compare_at_price"):
                 off = round((1 - p["price"] / p["compare_at_price"]) * 100)
                 flags.append(f"-{off}%")
+            stock = p.get("stock_status") or {}
+            if stock.get("tracked"):
+                low = stock.get("low") or {}
+                empty = sum(1 for q in low.values() if q <= 0)
+                if empty >= len(p["colors"]) * len(p["sizes"]):
+                    flags.append("SIN STOCK")
+                elif empty:
+                    flags.append(f"{empty} agotad{'a' if empty == 1 else 'as'}")
             items.append({
                 "id": p["id"],
                 "title": p["name"],

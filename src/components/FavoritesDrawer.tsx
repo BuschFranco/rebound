@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useFavorites } from "@/context/FavoritesContext";
-import { availableSizes, getCategoryLabel } from "@/lib/products";
+import { availableColors, availableSizes, getCategoryLabel } from "@/lib/products";
 import type { Product } from "@/types";
 import { CloseIcon, StarIcon } from "./icons";
 import { PriceTag } from "./PriceTag";
@@ -103,10 +103,14 @@ function FavoriteRow({ product: p, onNavigate }: { product: Product; onNavigate:
   const { remove } = useFavorites();
   const { addItem } = useCart();
   const { categories } = useCatalog();
-  const inStock = availableSizes(p);
-  const soldOut = inStock.length === 0;
-  const [size, setSize] = useState(p.sizes.length === 1 && inStock.length === 1 ? inStock[0] : "");
+  const colorsInStock = availableColors(p);
+  const soldOut = colorsInStock.length === 0;
   const [color, setColor] = useState(p.colors.length === 1 ? p.colors[0].name : "");
+  // Talles con stock en el color elegido (sin color: en alguno).
+  const inStock = availableSizes(p, color || undefined);
+  const [pickedSize, setSize] = useState(p.sizes.length === 1 && inStock.length === 1 ? inStock[0] : "");
+  // Si al cambiar de color el talle elegido no tiene stock, se deselecciona.
+  const size = inStock.includes(pickedSize) ? pickedSize : "";
   const [error, setError] = useState("");
   // Cambia en cada intento fallido para volver a disparar el temblor del aviso.
   const [attempt, setAttempt] = useState(0);
@@ -170,9 +174,10 @@ function FavoriteRow({ product: p, onNavigate }: { product: Product; onNavigate:
                 key={c.name}
                 type="button"
                 onClick={() => setColor(c.name)}
+                disabled={!colorsInStock.includes(c)}
                 aria-pressed={color === c.name}
-                title={c.name}
-                className={`size-6 rounded-full ring-offset-2 ring-offset-surface transition ${
+                title={colorsInStock.includes(c) ? c.name : `${c.name} (agotado)`}
+                className={`size-6 rounded-full ring-offset-2 ring-offset-surface transition disabled:cursor-not-allowed disabled:opacity-30 ${
                   color === c.name ? "ring-2 ring-accent" : "ring-1 ring-white/25 hover:ring-white/60"
                 }`}
                 style={{ backgroundColor: c.hex }}

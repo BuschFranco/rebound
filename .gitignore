@@ -48,3 +48,6 @@ next-env.d.ts
 !admin/.env.example
 admin/.venv/
 __pycache__/
+
+# caché del panel (inflación)
+admin/.cache/

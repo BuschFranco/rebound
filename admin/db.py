@@ -130,6 +130,44 @@ class Api:
     def delete(self, table: str, match: dict[str, Any]) -> None:
         self._request("DELETE", f"{self.rest}/{table}", params=self._filters(match))
 
+    def select_all(self, table: str, **params: str) -> list[dict[str, Any]]:
+        """Como select, pero trae todas las filas (Supabase devuelve como mucho 1000 por pedido)."""
+        rows: list[dict[str, Any]] = []
+        page = 1000
+        while True:
+            batch = self.select(table, **params, limit=str(page), offset=str(len(rows)))
+            rows.extend(batch)
+            if len(batch) < page:
+                return rows
+
+    def rpc(self, function: str, payload: dict[str, Any]) -> Any:
+        return self._request("POST", f"{self.rest}/rpc/{function}", json=payload)
+
+    # ---------- Stock y ventas ----------
+    def movements(self, product_id: str | None = None) -> list[dict[str, Any]]:
+        params = {"order": "happened_at,id"}
+        if product_id:
+            params["product_id"] = f"eq.{product_id}"
+        return self.select_all("inventory_movements", **params)
+
+    def sales(self) -> list[dict[str, Any]]:
+        return self.select_all("sales", order="sold_at.desc")
+
+    def record_purchase(self, payload: dict[str, Any]) -> None:
+        self.rpc("record_purchase", {"p": payload})
+
+    def adjust_stock(self, payload: dict[str, Any]) -> None:
+        self.rpc("adjust_stock", {"p": payload})
+
+    def record_sale(self, payload: dict[str, Any]) -> int:
+        return self.rpc("record_sale", {"p": payload})
+
+    def cancel_sale(self, sale_id: int) -> None:
+        self.rpc("cancel_sale", {"p_id": sale_id})
+
+    def set_order_status(self, order_id: int, status: str) -> None:
+        self.update("order_intents", {"id": order_id}, {"status": status})
+
     # ---------- Catálogo ----------
     def categories(self) -> list[dict[str, Any]]:
         return self.select("categories", order="sort_order,label")

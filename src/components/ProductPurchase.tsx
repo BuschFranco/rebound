@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
-import { availableSizes } from "@/lib/products";
+import { availableColors, availableSizes, variantLimit, variantStock } from "@/lib/products";
 import type { Product } from "@/types";
 import { QuantityPromoHint } from "./QuantityPromoHint";
 import { SizeGuide } from "./SizeGuide";
@@ -12,15 +12,22 @@ export function ProductPurchase({ product }: { product: Product }) {
   const { addItem } = useCart();
   const { categories } = useCatalog();
   const sizeGuide = categories.find((c) => c.slug === product.category)?.sizeGuide ?? "none";
-  const inStock = availableSizes(product);
-  const soldOut = inStock.length === 0;
-  const [size, setSize] = useState(inStock.length === 1 && product.sizes.length === 1 ? inStock[0] : "");
+  const colorsInStock = availableColors(product);
+  const soldOut = colorsInStock.length === 0;
+  const [color, setColor] = useState(product.colors.length === 1 ? product.colors[0].name : "");
+  // Talles con stock en el color elegido (sin color: en alguno).
+  const inStock = availableSizes(product, color || undefined);
+  const [pickedSize, setSize] = useState(inStock.length === 1 && product.sizes.length === 1 ? inStock[0] : "");
+  // Si al cambiar de color el talle elegido se queda sin stock, se deselecciona.
+  const size = inStock.includes(pickedSize) ? pickedSize : "";
   // La guía de talles puede recomendar uno agotado: en ese caso no se elige.
   const pickSize = (s: string) => {
     if (inStock.includes(s)) setSize(s);
   };
-  const [color, setColor] = useState(product.colors.length === 1 ? product.colors[0].name : "");
-  const [quantity, setQuantity] = useState(1);
+  const last = Boolean(size && color) && variantStock(product, color, size) === "last";
+  const limit = size && color ? variantLimit(product, color, size) : null;
+  const [pickedQuantity, setQuantity] = useState(1);
+  const quantity = limit === null ? pickedQuantity : Math.min(pickedQuantity, Math.max(limit, 1));
   const [showErrors, setShowErrors] = useState(false);
   // Cambia en cada intento fallido para volver a disparar el temblor del aviso.
   const [errorAttempt, setErrorAttempt] = useState(0);
@@ -50,10 +57,11 @@ export function ProductPurchase({ product }: { product: Product }) {
               key={c.name}
               type="button"
               onClick={() => setColor(c.name)}
+              disabled={!colorsInStock.includes(c)}
               aria-pressed={color === c.name}
-              aria-label={c.name}
-              title={c.name}
-              className={`size-9 rounded-full border-2 p-0.5 transition ${
+              aria-label={colorsInStock.includes(c) ? c.name : `${c.name} (agotado)`}
+              title={colorsInStock.includes(c) ? c.name : `${c.name} · Agotado`}
+              className={`size-9 rounded-full border-2 p-0.5 transition disabled:cursor-not-allowed disabled:opacity-30 ${
                 color === c.name ? "border-accent" : "border-transparent hover:border-white/30"
               }`}
             >
@@ -80,7 +88,8 @@ export function ProductPurchase({ product }: { product: Product }) {
         </legend>
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
           {product.sizes.map((s) => {
-            const out = product.soldOutSizes.includes(s);
+            const out = !inStock.includes(s);
+            const lastOne = !out && Boolean(color) && variantStock(product, color, s) === "last";
             return (
               <button
                 key={s}
@@ -104,6 +113,11 @@ export function ProductPurchase({ product }: { product: Product }) {
                     Agotado
                   </span>
                 )}
+                {lastOne && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-accent px-1 text-[8px] font-bold uppercase tracking-wider text-black">
+                    Último
+                  </span>
+                )}
               </button>
             );
           })}
@@ -113,6 +127,12 @@ export function ProductPurchase({ product }: { product: Product }) {
             ⚠ Seleccioná un talle.
           </p>
         )}
+        {last && (
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-accent/15 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-accent">
+            <span className="size-1.5 animate-pulse rounded-full bg-accent" aria-hidden />
+            ¡Último disponible!
+          </p>
+        )}
       </fieldset>
 
       <div className="flex gap-3">
@@ -120,7 +140,7 @@ export function ProductPurchase({ product }: { product: Product }) {
           <button
             type="button"
             className="px-3 py-3 text-lg leading-none disabled:opacity-30"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
             disabled={quantity <= 1}
             aria-label="Restar cantidad"
           >
@@ -131,8 +151,9 @@ export function ProductPurchase({ product }: { product: Product }) {
           </span>
           <button
             type="button"
-            className="px-3 py-3 text-lg leading-none"
-            onClick={() => setQuantity((q) => q + 1)}
+            className="px-3 py-3 text-lg leading-none disabled:opacity-30"
+            onClick={() => setQuantity(quantity + 1)}
+            disabled={limit !== null && quantity >= limit}
             aria-label="Sumar cantidad"
           >
             +
