@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
-import { availableColors, availableSizes, variantLimit, variantStock } from "@/lib/products";
+import {
+  availableColors,
+  availableSizes,
+  hasLastUnits,
+  isLastSizeEverywhere,
+  variantLimit,
+  variantStock,
+} from "@/lib/products";
 import type { Product } from "@/types";
 import { QuantityPromoHint } from "./QuantityPromoHint";
 import { SizeGuide } from "./SizeGuide";
@@ -47,6 +54,12 @@ export function ProductPurchase({ product }: { product: Product }) {
 
   return (
     <div className="space-y-6">
+      {!soldOut && !(size && color) && hasLastUnits(product) && (
+        <p className="inline-flex items-center gap-2 rounded-full bg-accent/15 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-accent">
+          <span className="size-1.5 animate-pulse rounded-full bg-accent" aria-hidden />
+          Quedan últimas unidades en algunos talles
+        </p>
+      )}
       <fieldset>
         <legend className="mb-3 text-xs font-bold uppercase tracking-widest">
           Color: <span className="font-normal normal-case tracking-normal text-muted">{color || "Elegí un color"}</span>
@@ -89,7 +102,8 @@ export function ProductPurchase({ product }: { product: Product }) {
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
           {product.sizes.map((s) => {
             const out = !inStock.includes(s);
-            const lastOne = !out && Boolean(color) && variantStock(product, color, s) === "last";
+            const lastOne =
+              !out && (color ? variantStock(product, color, s) === "last" : isLastSizeEverywhere(product, s));
             return (
               <button
                 key={s}

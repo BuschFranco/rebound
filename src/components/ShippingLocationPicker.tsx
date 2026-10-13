@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { POLICIES } from "@/data/business";
-import { formatPrice } from "@/lib/format";
 import type { OrderShipping } from "@/lib/order";
 import { formatLocation } from "@/lib/shipping";
 import type { ShippingLocation } from "@/types";
@@ -117,12 +116,6 @@ export function ShippingLocationPicker({
             Cambiar
           </button>
         </div>
-        {shipping.status === "ok" && shipping.missingForFree > 0 && (
-          <p className="mt-2 text-xs text-muted">
-            Sumá <strong className="text-accent">{formatPrice(shipping.missingForFree)}</strong> más y el envío es
-            gratis.
-          </p>
-        )}
         {shipping.status === "out-of-zone" && (
           <p className="mt-2 text-xs text-accent">
             Todavía no tenemos envíos a esa zona ({POLICIES.shippingAreasShort}). Podés mandarnos el pedido igual y lo

@@ -17,13 +17,13 @@ function benefit(promo: DiscountPromotion) {
 }
 
 /**
- * Promos en el carrito: el descuento aplicado (si hay varios, el que más ahorra), la próxima oportunidad
- * de ahorro y el envío gratis por promo (cumplido o cuánto falta).
+ * Promos en el carrito: el descuento aplicado (si hay varios, el que más ahorra) y la próxima oportunidad
+ * de ahorro. El envío gratis lo muestra <FreeShippingProgress>.
  */
 export function CartPromo({ order }: { order: Order }) {
   const { active } = usePromo();
   const { categories } = useCatalog();
-  const { promo, shipping, freeShippingLabel, freeShippingNext } = order;
+  const { promo } = order;
   if (!active || promo.units === 0) return null;
 
   const next = promo.next;
@@ -38,21 +38,7 @@ export function CartPromo({ order }: { order: Order }) {
   const filled = nxm ? (promo.units % nxm.buy === 0 ? nxm.buy : promo.units % nxm.buy) : 0;
   const shown = promo.applied ?? next?.promo ?? null;
 
-  const freeShippingLine = freeShippingLabel ? (
-    <>🚚 <strong className="text-whatsapp">Envío gratis</strong> <span className="text-muted">({freeShippingLabel})</span></>
-  ) : freeShippingNext?.missingUnits ? (
-    <>
-      🚚 Sumá <strong className="text-accent">{freeShippingNext.missingUnits} {freeShippingNext.missingUnits === 1 ? "producto" : "productos"} más</strong>{" "}
-      <span className="text-muted">y el envío es <span className="font-semibold text-accent">gratis</span>.</span>
-    </>
-  ) : freeShippingNext?.missingAmount && shipping.status !== "ok" ? (
-    <>
-      🚚 Sumá <strong className="text-accent">{formatPrice(freeShippingNext.missingAmount)}</strong>{" "}
-      <span className="text-muted">más y el envío es <span className="font-semibold text-accent">gratis</span>.</span>
-    </>
-  ) : null;
-
-  if (!shown && !freeShippingLine) return null;
+  if (!shown) return null;
 
   return (
     <div className="space-y-2 border-b border-line bg-surface-2/60 px-5 py-4 text-sm">
@@ -79,7 +65,6 @@ export function CartPromo({ order }: { order: Order }) {
           ))}
         </div>
       )}
-      {freeShippingLine && <p>{freeShippingLine}</p>}
       {shown && (
         <>
           <p className="text-[11px] text-muted">

@@ -21,7 +21,7 @@ export function PriceTag({
             {formatPrice(compareAtPrice!)}
           </span>
           <span className={`font-bold text-accent ${size === "lg" ? "text-sm" : "text-xs"}`}>
-            {off}% OFF
+            Ahorrás {formatPrice(compareAtPrice! - price)}
           </span>
         </>
       )}

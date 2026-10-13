@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { discountPercent, formatPrice } from "@/lib/format";
-import { availableSizes } from "@/lib/products";
+import { availableSizes, hasLastUnits } from "@/lib/products";
 import { usePromo } from "@/context/PromoContext";
 import { isDiscount, nthUnitPrice, ordinal, productBadges, promoUnitPrice } from "@/lib/promo";
 import type { Product } from "@/types";
@@ -67,10 +67,16 @@ export function ProductCard({
                   Nuevo
                 </span>
               )}
-              {availableSizes(product).length === 0 && (
+              {availableSizes(product).length === 0 ? (
                 <span className="rounded bg-black/75 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                   Sin stock
                 </span>
+              ) : (
+                hasLastUnits(product) && (
+                  <span className="rounded bg-accent px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-black">
+                    ¡Últimas unidades!
+                  </span>
+                )
               )}
             </div>
           </div>

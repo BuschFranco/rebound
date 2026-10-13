@@ -17,6 +17,7 @@ import { getCartSuggestions, variantLimit } from "@/lib/products";
 import { buildOrderMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { CartNotices } from "./CartNotices";
 import { CartPromo } from "./CartPromo";
+import { FreeShippingProgress } from "./FreeShippingProgress";
 import { CartAddress } from "./CartAddress";
 import { CashIcon, CloseIcon, TrashIcon, TruckIcon, WhatsAppIcon } from "./icons";
 
@@ -157,6 +158,7 @@ export function CartDrawer() {
         ) : (
           <>
             <CartPromo order={order} />
+            <FreeShippingProgress order={order} />
             <div className="min-h-56 flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
               <ul className="divide-y divide-line px-5">
                 {lines.map((item) => (

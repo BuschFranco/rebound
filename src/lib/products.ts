@@ -137,6 +137,19 @@ export function variantStock(product: Product, color: string, size: string): Var
   return qty === undefined ? "ok" : qty <= 0 ? "out" : "last";
 }
 
+/** Alguna variante que todavía se puede pedir está en su última unidad (dato real del stock). */
+export function hasLastUnits(product: Product) {
+  if (!product.stock.tracked) return false;
+  return product.colors.some((c) => product.sizes.some((s) => variantStock(product, c.name, s) === "last"));
+}
+
+/** Sin color elegido: el talle está en su última unidad en todos los colores que lo tienen disponible. */
+export function isLastSizeEverywhere(product: Product, size: string) {
+  if (!product.stock.tracked) return false;
+  const available = product.colors.map((c) => variantStock(product, c.name, size)).filter((s) => s !== "out");
+  return available.length > 0 && available.every((s) => s === "last");
+}
+
 /** Unidades que se pueden pedir de una variante (null = sin límite conocido). */
 export function variantLimit(product: Product, color: string, size: string): number | null {
   const stock = variantStock(product, color, size);
