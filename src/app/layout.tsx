@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Inter } from "next/font/google";
 import { CartDrawer } from "@/components/CartDrawer";
 import { SplashScreen } from "@/components/SplashScreen";
+import { TabReminder } from "@/components/TabReminder";
 import { FavoritesDrawer } from "@/components/FavoritesDrawer";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
@@ -70,6 +71,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col font-sans">
         <GoogleTagManagerNoScript />
         <SplashScreen />
+        <TabReminder />
         <JsonLd data={SITE_JSON_LD} />
         <SmoothScroll>
           <CatalogProvider catalog={catalog}>
