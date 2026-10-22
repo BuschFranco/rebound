@@ -10,7 +10,7 @@ function SwapIcon({ className }: { className?: string }) {
 }
 
 const ITEMS = [
-  { icon: CashIcon, title: "Pagás al recibir", text: "Sin tarjeta ni anticipo", color: "text-accent-2" },
+  { icon: CashIcon, title: "Pagás al recibir", text: "Efectivo, transferencia o cuotas", color: "text-accent-2" },
   { icon: SwapIcon, title: `Cambio gratis`, text: `${POLICIES.exchangeDays} días`, color: "text-accent" },
   { icon: TruckIcon, title: "Entrega", text: DELIVERY.label, color: "text-whatsapp" },
 ];

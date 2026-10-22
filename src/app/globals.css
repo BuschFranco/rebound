@@ -208,7 +208,7 @@ input[type="search"]::-webkit-search-cancel-button {
 /* ---------- Pantalla de carga (SplashScreen) ---------- */
 /* Sin JavaScript se va sola a los 3 s. */
 .splash {
-  animation: splash-out 0.45s ease 3s forwards;
+  animation: splash-out 0.45s ease 1.5s forwards;
 }
 .splash-ball {
   animation: splash-bounce 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
@@ -218,7 +218,7 @@ input[type="search"]::-webkit-search-cancel-button {
   animation: splash-shadow 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 .splash-bar {
-  animation: splash-bar 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: splash-bar 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes splash-bounce {
@@ -266,5 +266,12 @@ input[type="search"]::-webkit-search-cancel-button {
   .splash-ball,
   .splash-shadow {
     animation: none;
+  }
+}
+
+/* Con la barra fija de compra (celular), el botón de WhatsApp sube para no taparla. */
+@media (width < 64rem) {
+  body[data-sticky-cta] .whatsapp-float {
+    bottom: 6rem;
   }
 }

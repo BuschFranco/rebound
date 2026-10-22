@@ -114,6 +114,11 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
                   Nuevo
                 </span>
               )}
+              {product.isBestSeller && (
+                <span className="rounded bg-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-black">
+                  🔥 Más vendido
+                </span>
+              )}
             </div>
             <div className="mt-3 flex items-start justify-between gap-4">
               <h1 className="font-display text-5xl uppercase italic leading-[0.95] sm:text-6xl">{product.name}</h1>
@@ -124,6 +129,10 @@ export default async function ProductPage({ params }: PageProps<"/producto/[slug
             </div>
             <div className="mt-4">
               <PriceTag price={product.price} compareAtPrice={product.compareAtPrice} size="lg" />
+              <p className="mt-1.5 text-sm text-muted">
+                💳 Pagalo al recibir: efectivo, transferencia o{" "}
+                <strong className="text-ink">en cuotas con Mercado Pago</strong>
+              </p>
             </div>
             <div className="mt-5">
               <PromoCallout product={product} />

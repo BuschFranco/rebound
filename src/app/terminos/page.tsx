@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage } from "@/components/LegalPage";
 import { PromoGate } from "@/components/PromoGate";
-import { BUSINESS, CONSUMER_DEFENSE_URL, POLICIES } from "@/data/business";
+import { BUSINESS, CONSUMER_DEFENSE_URL, PAYMENT_METHODS_TEXT, POLICIES } from "@/data/business";
 import { getCatalog } from "@/lib/catalog";
 import { promoConditions } from "@/lib/promo";
 import { pageMetadata } from "@/lib/seo";
@@ -75,8 +75,9 @@ export default async function TermsPage() {
 
       <h2>4. Pago</h2>
       <p>
-        <strong>Solo se paga al recibir el pedido.</strong> No pedimos tarjetas, anticipos ni
-        señas. Medios aceptados al momento de la entrega: {POLICIES.paymentMethods.join(" o ")}.
+        <strong>Solo se paga al recibir el pedido.</strong> No pedimos anticipos ni señas.
+        Medios aceptados al momento de la entrega: {PAYMENT_METHODS_TEXT}. Las cuotas con tarjeta, su
+        cantidad y su costo financiero los define Mercado Pago según tu tarjeta al momento del pago.
       </p>
 
       <h2>5. Envíos</h2>

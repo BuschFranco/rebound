@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { CashIcon, TruckIcon, WhatsAppIcon } from "@/components/icons";
 import { Faq } from "@/components/Faq";
@@ -19,6 +18,7 @@ import { OFFERS_BANNER_DEFAULTS, resolveBanner } from "@/lib/banners";
 import { HeroPromoTag, HomeBanners } from "@/components/PromoBanner";
 import { CAROUSEL_MAX, getCategoryLabel, getLatestProducts, getMaxDiscount, getOnSale, getTopDiscounts } from "@/lib/products";
 import { ProductCard } from "@/components/ProductCard";
+import { SkeletonImage } from "@/components/SkeletonImage";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -33,6 +33,7 @@ const MARQUEE: { text: string; promo?: boolean }[] = [
   { text: `Entrega en ${DELIVERY.label}` },
   { text: "Envíos en CABA y Provincia de Bs. As." },
   { text: "Pagás al recibir" },
+  { text: "Cuotas con Mercado Pago al recibir" },
   { text: `Cambio gratis ${POLICIES.exchangeDays} días` },
   { text: "Hecho para la cancha y la calle" },
 ];
@@ -57,13 +58,14 @@ export default async function Home() {
     <>
       {/* Hero */}
       <section className="relative isolate flex min-h-[78vh] items-end overflow-hidden">
-        <Image
+        <SkeletonImage
           src={HERO_IMAGE}
           alt="Silueta de un jugador volcando la pelota en el aro"
           fill
           loading="eager"
           sizes="100vw"
           className="-z-20 object-cover object-right"
+          skeletonClassName="-z-20"
         />
         <div className="absolute inset-0 -z-10 bg-gradient-brand opacity-50 mix-blend-color" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-transparent to-transparent" />
@@ -81,7 +83,7 @@ export default async function Home() {
           </h1>
           <p className="mt-6 max-w-lg text-base text-white/80 sm:text-lg">
             <span className="font-semibold text-white">Lo pedís hoy y lo tenés ayer.</span>{" "}
-            Sin tarjeta ni registro: pagás recién cuando lo recibís.
+            Sin registro ni anticipos: pagás recién cuando lo recibís, también en cuotas.
           </p>
           <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold uppercase tracking-widest text-white/90 sm:text-sm">
             <li className="flex items-center gap-2">
@@ -206,7 +208,7 @@ export default async function Home() {
           {[
             { icon: <WhatsAppIcon className="size-7 text-whatsapp" />, title: "Pedí por WhatsApp", text: "Armá el carrito y mandanos el pedido en un toque." },
             { icon: <TruckIcon className="size-7 text-accent" />, title: "Envíos en CABA y PBA", text: "Coordinamos la entrega por chat y te informamos el costo antes de confirmar." },
-            { icon: <CashIcon className="size-7 text-accent-2" />, title: "Pagás al recibir", text: `Sin tarjetas ni anticipos. Cambio gratis ${POLICIES.exchangeDays} días y devolución sin costo por fallas.` },
+            { icon: <CashIcon className="size-7 text-accent-2" />, title: "Pagás al recibir", text: `Efectivo, transferencia o en cuotas con Mercado Pago. Sin anticipos. Cambio gratis ${POLICIES.exchangeDays} días y devolución sin costo por fallas.` },
           ].map((f) => (
             <div key={f.title} className="flex gap-4">
               <span className="grid size-12 shrink-0 place-items-center rounded-full bg-surface-2">{f.icon}</span>

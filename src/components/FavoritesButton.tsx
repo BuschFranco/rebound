@@ -10,6 +10,7 @@ export function FavoritesButton() {
     <button
       type="button"
       onClick={open}
+      data-favorites-target
       className="relative grid size-10 cursor-pointer place-items-center rounded-full transition hover:bg-surface"
       aria-label={`Abrir favoritos (${count} productos)`}
     >

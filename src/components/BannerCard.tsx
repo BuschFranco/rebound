@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SkeletonImage } from "./SkeletonImage";
 import { BANNER_IMAGE } from "@/data/site";
 
 /** Hosts que Next optimiza (ver next.config.ts). Una imagen de otro sitio se muestra tal cual. */
@@ -39,13 +39,14 @@ export function BannerCard({
       href={href}
       className="group relative isolate block flex-1 cursor-pointer overflow-hidden rounded-2xl outline-none ring-accent focus-visible:ring-2"
     >
-      <Image
+      <SkeletonImage
         src={image}
         unoptimized={!canOptimize(image)}
         alt=""
         fill
         sizes="(min-width: 1024px) 640px, 100vw"
         className="-z-20 object-cover transition duration-700 ease-out group-hover:scale-105"
+        skeletonClassName="-z-20"
       />
       <div className={`absolute inset-0 -z-10 mix-blend-multiply ${tint}`} />
       <div className={`absolute inset-0 -z-10 bg-gradient-to-r ${align} to-transparent`} />

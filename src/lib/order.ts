@@ -40,6 +40,11 @@ export type Order = {
   total: number;
 };
 
+/** El pedido ya tiene envío gratis (por una promo o por el "gratis desde" de la zona). */
+export function hasFreeShipping(order: Order) {
+  return order.freeShippingLabel !== null || (order.shipping.status === "ok" && order.shipping.isFree);
+}
+
 export function buildOrder({
   lines,
   promotions,

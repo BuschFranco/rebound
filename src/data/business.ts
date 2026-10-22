@@ -29,10 +29,15 @@ export const POLICIES = {
   revocationDays: 10,
   shippingAreas: ["Ciudad Autónoma de Buenos Aires (CABA)", "Provincia de Buenos Aires"],
   shippingAreasShort: "CABA y Provincia de Buenos Aires",
-  paymentMethods: ["Efectivo", "Transferencia bancaria"],
+  paymentMethods: ["Efectivo", "Transferencia bancaria", "Mercado Pago con QR (en cuotas con tarjeta)"],
   /** Fecha de última actualización de los textos legales. */
-  lastUpdated: "5 de octubre de 2026",
+  lastUpdated: "22 de octubre de 2026",
 } as const;
+
+/** "efectivo, transferencia bancaria o Mercado Pago…" */
+export const PAYMENT_METHODS_TEXT = new Intl.ListFormat("es", { type: "disjunction" }).format(
+  POLICIES.paymentMethods.map((m) => (m.startsWith("Mercado Pago") ? m : m.toLowerCase())),
+);
 
 /** Las promociones (3x2, descuento en la X unidad, envío gratis) viven en la tabla `promotions` de Supabase. */
 

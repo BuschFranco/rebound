@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { usePromo } from "@/context/PromoContext";
 import type { Promotion } from "@/types";
 
@@ -36,7 +37,7 @@ export function PromoCountdown({
   promo,
   className = "",
 }: {
-  label?: string;
+  label?: ReactNode;
   variant?: "inline" | "blocks";
   tone?: "onColor" | "onDark";
   /** Promo puntual; sin ella, cuenta hasta la vigente que termina primero. */

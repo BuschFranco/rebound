@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { formatPrice } from "@/lib/format";
-import type { Order } from "@/lib/order";
+import { hasFreeShipping, type Order } from "@/lib/order";
 
 /**
  * Barra de avance hacia el envío gratis (por zona o por promo). Ver cuánto falta empuja a completar
@@ -12,7 +12,7 @@ export function FreeShippingProgress({ order }: { order: Order }) {
   const { shipping, promo, freeShippingLabel, freeShippingNext } = order;
   if (promo.units === 0) return null;
 
-  const done = freeShippingLabel !== null || (shipping.status === "ok" && shipping.isFree);
+  const done = hasFreeShipping(order);
   // Con localidad, missingForFree ya es el umbral más cercano entre la zona y las promos por monto.
   const missingAmount =
     shipping.status === "ok"

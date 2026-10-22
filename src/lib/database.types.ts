@@ -185,6 +185,11 @@ isOneToOne: false
             "adjust_stock":
 { Args: { "p": Json }; Returns: undefined
                            },
+"best_sellers":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "product_id": string
+            }[]
+                           },
 "cancel_sale":
 { Args: { "p_id": number }; Returns: undefined
                            },

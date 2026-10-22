@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
-import { BUSINESS, POLICIES } from "@/data/business";
+import { BUSINESS, PAYMENT_METHODS_TEXT, POLICIES } from "@/data/business";
 import { getCatalog } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { pageMetadata } from "@/lib/seo";
@@ -64,8 +64,9 @@ export default async function ShippingPage() {
 
       <h2>Pago al recibir</h2>
       <p>
-        <strong>Solo pagás cuando recibís tu pedido.</strong> No pedimos tarjetas, anticipos ni
-        señas. Medios de pago aceptados: {POLICIES.paymentMethods.join(" y ").toLowerCase()}.
+        <strong>Solo pagás cuando recibís tu pedido.</strong> No pedimos anticipos ni señas.
+        Medios de pago aceptados: {PAYMENT_METHODS_TEXT}. Con Mercado Pago te generamos un QR al
+        momento de la entrega y podés pagar con tarjeta en cuotas.
       </p>
       <p>
         Al recibir el pedido te entregamos la factura correspondiente. Revisá los productos en el

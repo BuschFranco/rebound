@@ -11,27 +11,21 @@ const FADE_MS = 450;
 /**
  * Pantalla de carga en cada carga completa de la página (al entrar o recargar; no al navegar dentro del
  * sitio, porque vive en el layout): pelota naranja que rebota, logo y una línea que se llena.
- * Sale en el HTML del servidor (se ve desde el primer instante) y se desvanece cuando la página
- * terminó de cargar. Sin JavaScript se va sola por CSS (ver .splash en globals.css).
+ * Sale en el HTML del servidor (se ve desde el primer instante) y se desvanece apenas la página es
+ * interactiva (al hidratar), sin esperar a que bajen todas las imágenes: esas muestran su propio
+ * skeleton (SkeletonImage). Sin JavaScript se va sola por CSS (ver .splash en globals.css).
  */
 export function SplashScreen() {
   const [phase, setPhase] = useState<"visible" | "leaving" | "gone">("visible");
 
   useEffect(() => {
-    let timer: number | undefined;
-    const leave = () => {
-      const wait = Math.max(0, MIN_VISIBLE - performance.now());
-      timer = window.setTimeout(() => {
-        setPhase("leaving");
-        timer = window.setTimeout(() => setPhase("gone"), FADE_MS);
-      }, wait);
-    };
-    if (document.readyState === "complete") leave();
-    else window.addEventListener("load", leave, { once: true });
-    return () => {
-      window.removeEventListener("load", leave);
-      window.clearTimeout(timer);
-    };
+    // performance.now() cuenta desde que empezó la navegación: si hidratar ya tardó más, se va enseguida.
+    const wait = Math.max(0, MIN_VISIBLE - performance.now());
+    let timer = window.setTimeout(() => {
+      setPhase("leaving");
+      timer = window.setTimeout(() => setPhase("gone"), FADE_MS);
+    }, wait);
+    return () => window.clearTimeout(timer);
   }, []);
 
   if (phase === "gone") return null;

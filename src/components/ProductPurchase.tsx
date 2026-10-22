@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useLenis } from "lenis/react";
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
+import { formatPrice } from "@/lib/format";
+import { flyToCart } from "@/lib/fx";
 import {
   availableColors,
   availableSizes,
@@ -40,20 +43,54 @@ export function ProductPurchase({ product }: { product: Product }) {
   const [errorAttempt, setErrorAttempt] = useState(0);
 
   const ready = Boolean(size && color);
+  const [adding, setAdding] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const lenis = useLenis();
 
-  function handleAdd() {
-    if (soldOut) return;
+  // Barra fija en el celular mientras el botón principal no está a la vista.
+  const [buttonVisible, setButtonVisible] = useState(true);
+  useEffect(() => {
+    const el = buttonRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => setButtonVisible(entry.isIntersecting));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  const showStickyBar = !soldOut && !buttonVisible;
+  // El botón flotante de WhatsApp sube para no quedar tapado por la barra.
+  useEffect(() => {
+    if (!showStickyBar) return;
+    document.body.dataset.stickyCta = "";
+    return () => {
+      delete document.body.dataset.stickyCta;
+    };
+  }, [showStickyBar]);
+
+  /** `from`: botón desde el que sale la pelota hacia el carrito. */
+  async function handleAdd(from: Element | null) {
+    if (soldOut || adding) return;
     if (!ready) {
       setShowErrors(true);
       setErrorAttempt((n) => n + 1);
+      // Desde la barra fija: llevar a la persona a elegir talle y color.
+      if (from !== buttonRef.current && rootRef.current) {
+        // El header es fijo: se deja su alto (más un margen) arriba del selector.
+        const offset = -((document.querySelector("header")?.offsetHeight ?? 0) + 16);
+        if (lenis) lenis.scrollTo(rootRef.current, { offset });
+        else window.scrollTo({ top: rootRef.current.getBoundingClientRect().top + window.scrollY + offset, behavior: "smooth" });
+      }
       return;
     }
+    setAdding(true);
+    if (from) await flyToCart(from);
     addItem(product, size, color, quantity);
     setQuantity(1);
+    setAdding(false);
   }
 
   return (
-    <div className="space-y-6">
+    <div ref={rootRef} className="space-y-6">
       {!soldOut && !(size && color) && hasLastUnits(product) && (
         <p className="inline-flex items-center gap-2 rounded-full bg-accent/15 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-accent">
           <span className="size-1.5 animate-pulse rounded-full bg-accent" aria-hidden />
@@ -174,8 +211,9 @@ export function ProductPurchase({ product }: { product: Product }) {
           </button>
         </div>
         <button
+          ref={buttonRef}
           type="button"
-          onClick={handleAdd}
+          onClick={(e) => handleAdd(e.currentTarget)}
           disabled={soldOut}
           className={`flex-1 rounded-full px-6 py-3.5 text-sm font-bold uppercase tracking-widest transition ${
             soldOut
@@ -194,6 +232,32 @@ export function ProductPurchase({ product }: { product: Product }) {
         quantity={quantity}
         onSetQuantity={setQuantity}
       />
+
+      {/* Barra fija de compra (solo celular) */}
+      <div
+        aria-hidden={!showStickyBar}
+        inert={!showStickyBar}
+        className={`fixed inset-x-0 bottom-0 z-30 border-t border-line bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl transition-transform duration-300 lg:hidden ${
+          showStickyBar ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="mx-auto flex max-w-xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-semibold uppercase tracking-wide">{product.name}</p>
+            <p className="text-xs text-muted">
+              <span className="font-bold tabular-nums text-ink">{formatPrice(product.price)}</span>
+              {ready ? ` · ${color} · Talle ${size}` : " · Elegí talle y color"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => handleAdd(e.currentTarget)}
+            className="shrink-0 rounded-full bg-accent px-5 py-3 text-xs font-bold uppercase tracking-widest text-black shadow-[0_0_24px_-6px_var(--accent)] transition hover:brightness-110"
+          >
+            {ready ? "Agregar" : "Elegir talle"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

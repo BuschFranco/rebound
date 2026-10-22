@@ -27,12 +27,22 @@ export function HeroPromoTag({ fallback }: { fallback: ReactNode }) {
   const others = promos.length - 1;
   return (
     // El reloj va dentro de la pastilla: los bloques grandes chocan con el título.
-    <p className="inline-flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl bg-accent-2 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white sm:rounded-full">
-      <span>
+    <p className="inline-flex max-w-full items-center gap-x-2.5 whitespace-nowrap rounded-full bg-accent-2 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-white sm:gap-x-3 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
+      <span className="truncate">
         {promoHeadline(primary, categories)}
-        {others > 0 && <span className="text-white/75"> · +{others} {others === 1 ? "promo" : "promos"}</span>}
+        {others > 0 && (
+          <span className="hidden text-white/75 sm:inline">
+            {" "}
+            · +{others} {others === 1 ? "promo" : "promos"}
+          </span>
+        )}
       </span>
-      <PromoCountdown promo={primary} variant="inline" className="text-white/90" />
+      <PromoCountdown
+        promo={primary}
+        variant="inline"
+        label={<span className="hidden sm:inline">Termina en</span>}
+        className="shrink-0 text-white/90"
+      />
     </p>
   );
 }

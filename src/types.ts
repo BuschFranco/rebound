@@ -86,6 +86,8 @@ export type Product = {
   publishedAt: number;
   /** Publicado hace menos de NEW_PRODUCT_DAYS días (se calcula, no se carga a mano). */
   isNew: boolean;
+  /** Top 3 de ventas de los últimos 30 días (función best_sellers de la base; solo el dato sí/no). */
+  isBestSeller: boolean;
   /** 3 beneficios cortos que responden las dudas típicas antes de comprar. */
   highlights?: string[];
 };

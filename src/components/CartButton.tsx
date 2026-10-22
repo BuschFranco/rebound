@@ -9,6 +9,7 @@ export function CartButton() {
     <button
       type="button"
       onClick={open}
+      data-cart-target
       className="relative grid size-10 cursor-pointer place-items-center rounded-full transition hover:bg-surface"
       aria-label={`Abrir carrito (${count} productos)`}
     >

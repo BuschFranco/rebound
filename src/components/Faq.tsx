@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { usePromo } from "@/context/PromoContext";
-import { DELIVERY, POLICIES } from "@/data/business";
+import { DELIVERY, PAYMENT_METHODS_TEXT, POLICIES } from "@/data/business";
 import { useCatalog } from "@/context/CatalogContext";
 import { formatPromoValidity, isDiscount, promoDescription } from "@/lib/promo";
 import type { CategoryInfo, Promotion } from "@/types";
@@ -20,7 +20,16 @@ function buildQuestions(promos: Promotion[], categories: CategoryInfo[]): QA[] {
       <>
         Armás el carrito y nos mandás el pedido por WhatsApp. Te confirmamos stock, costo de envío y
         día de entrega, y <strong>pagás recién cuando lo tenés en la mano</strong>, en{" "}
-        {POLICIES.paymentMethods.join(" o ").toLowerCase()}. Sin tarjeta, sin anticipo.
+        {PAYMENT_METHODS_TEXT}. Sin anticipos ni señas.
+      </>
+    ),
+  },
+  {
+    q: "¿Puedo pagar en cuotas?",
+    a: (
+      <>
+        Sí. Al recibir el pedido te generamos un <strong>QR de Mercado Pago</strong> y pagás con tu tarjeta en
+        las cuotas que te ofrezca Mercado Pago. Si preferís, también podés pagar en efectivo o por transferencia.
       </>
     ),
   },

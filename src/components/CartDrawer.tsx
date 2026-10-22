@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { SkeletonImage } from "./SkeletonImage";
 import Link from "next/link";
 import { useLenis } from "lenis/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useCart } from "@/context/CartContext";
 import { usePromo } from "@/context/PromoContext";
 import { formatPrice } from "@/lib/format";
@@ -12,14 +13,16 @@ import { useCatalog } from "@/context/CatalogContext";
 import type { CartNotice } from "@/lib/cartValidation";
 import type { SavedAddress } from "@/types";
 import { addressStore } from "@/lib/addressStore";
-import { buildOrder, type Order } from "@/lib/order";
+import { buildOrder, hasFreeShipping, type Order } from "@/lib/order";
 import { getCartSuggestions, variantLimit } from "@/lib/products";
 import { buildOrderMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { CartNotices } from "./CartNotices";
 import { CartPromo } from "./CartPromo";
 import { FreeShippingProgress } from "./FreeShippingProgress";
+import { celebrate, slideOut } from "@/lib/fx";
 import { CartAddress } from "./CartAddress";
-import { CashIcon, CloseIcon, TrashIcon, TruckIcon, WhatsAppIcon } from "./icons";
+import mercadoPagoLogo from "@/app/mercadopago.png";
+import { CloseIcon, TrashIcon, TruckIcon, WhatsAppIcon } from "./icons";
 
 export function CartDrawer() {
   const { lines, notices, isOpen, close, count, promo, updateQty, removeItem, clear } = useCart();
@@ -37,6 +40,23 @@ export function CartDrawer() {
   // Pedido verificado contra la base que difiere de lo mostrado: se muestra y se pide confirmación.
   const [pending, setPending] = useState<{ order: Order; notices: CartNotice[] } | null>(null);
   const [checking, setChecking] = useState(false);
+  // Línea que se está por quitar del carrito: se pide confirmación antes.
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+
+  // "¡Swish!" cuando se desbloquea un beneficio con el carrito abierto (no al cargar la página).
+  const rewardsRef = useRef<HTMLDivElement>(null);
+  const freeShipping = hasFreeShipping(order);
+  const discountedUnits = order.promo.discountedUnits;
+  const appliedLabel = order.promo.applied?.label ?? null;
+  const previous = useRef({ discountedUnits, freeShipping });
+  useEffect(() => {
+    const before = previous.current;
+    previous.current = { discountedUnits, freeShipping };
+    const anchor = rewardsRef.current;
+    if (!isOpen || !anchor) return;
+    if (discountedUnits > before.discountedUnits && appliedLabel) celebrate(anchor, `¡Swish! ${appliedLabel}`);
+    else if (freeShipping && !before.freeShipping) celebrate(anchor, "¡Swish! Envío gratis");
+  }, [discountedUnits, freeShipping, appliedLabel, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -112,6 +132,24 @@ export function CartDrawer() {
     }
   }
 
+  // Dirección de entrega: se muestra con o sin productos (se puede dejar lista antes de comprar).
+  const addressSection = (
+    <CartAddress
+      saved={savedAddress}
+      draft={addressDraft}
+      onDraftChange={setAddressDraft}
+      onSave={(next) => {
+        addressStore.save(next);
+        setAddressDraft(null);
+      }}
+      onClear={() => {
+        addressStore.clear();
+        setAddressDraft(null);
+      }}
+      shipping={order.shipping}
+    />
+  );
+
   return (
     <div className={`fixed inset-0 z-50 ${isOpen ? "" : "pointer-events-none"}`} inert={!isOpen}>
       <div
@@ -144,21 +182,27 @@ export function CartDrawer() {
         <CartNotices notices={notices} />
 
         {lines.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-            <p className="font-display text-4xl uppercase italic">Sin jugadas</p>
-            <p className="text-muted">Tu carrito está vacío.</p>
-            <Link
-              href="/catalogo"
-              onClick={close}
-              className="rounded-full bg-accent px-6 py-3 text-xs font-bold uppercase tracking-widest text-black"
-            >
-              Ver catálogo
-            </Link>
+          <div className="flex flex-1 flex-col overflow-y-auto overscroll-contain" data-lenis-prevent>
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
+              <p className="font-display text-4xl uppercase italic">Sin jugadas</p>
+              <p className="text-muted">Tu carrito está vacío.</p>
+              <Link
+                href="/catalogo"
+                onClick={close}
+                className="rounded-full bg-accent px-6 py-3 text-xs font-bold uppercase tracking-widest text-black"
+              >
+                Ver catálogo
+              </Link>
+            </div>
+            {/* La dirección se puede dejar lista (o revisar) aunque todavía no haya productos. */}
+            {addressSection}
           </div>
         ) : (
           <>
-            <CartPromo order={order} />
-            <FreeShippingProgress order={order} />
+            <div ref={rewardsRef}>
+              <CartPromo order={order} />
+              <FreeShippingProgress order={order} />
+            </div>
             <div className="min-h-56 flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
               <ul className="divide-y divide-line px-5">
                 {lines.map((item) => (
@@ -181,7 +225,7 @@ export function CartDrawer() {
                         </Link>
                         <button
                           type="button"
-                          onClick={() => removeItem(item.key)}
+                          onClick={() => setConfirmRemove(item.key)}
                           className="text-muted hover:text-accent"
                           aria-label={`Quitar ${item.product.name}`}
                         >
@@ -191,50 +235,67 @@ export function CartDrawer() {
                       <p className="mt-1 text-xs text-muted">
                         Talle {item.size} · {item.color}
                       </p>
-                      <div className="mt-auto flex items-center justify-between pt-2">
-                        <div className="flex items-center rounded-full border border-line bg-surface-2 text-sm">
-                          <button
-                            type="button"
-                            className="px-2.5 py-1"
-                            onClick={() => updateQty(item.key, item.quantity - 1)}
-                            aria-label="Restar"
-                          >
-                            −
-                          </button>
-                          <span className="w-6 text-center tabular-nums">{item.quantity}</span>
-                          <button
-                            type="button"
-                            className="px-2.5 py-1 disabled:opacity-30"
-                            onClick={() => updateQty(item.key, item.quantity + 1)}
-                            disabled={item.quantity >= (variantLimit(item.product, item.color, item.size) ?? Infinity)}
-                            aria-label="Sumar"
-                          >
-                            +
-                          </button>
+                      {confirmRemove === item.key ? (
+                        <div role="alert" className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-2">
+                          <span className="text-sm font-semibold">¿Quitar este producto?</span>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setConfirmRemove(null)}
+                              className="rounded-full border border-line px-3 py-1 text-xs font-semibold transition hover:border-white/40"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async (e) => {
+                                const row = e.currentTarget.closest("li");
+                                if (row) await slideOut(row);
+                                removeItem(item.key);
+                                setConfirmRemove(null);
+                              }}
+                              className="rounded-full bg-accent px-3 py-1 text-xs font-bold text-black transition hover:brightness-110"
+                            >
+                              Sí, quitar
+                            </button>
+                          </div>
                         </div>
-                        <span className="text-sm font-semibold tabular-nums">
-                          {formatPrice(item.product.price * item.quantity)}
-                        </span>
-                      </div>
+                      ) : (
+                        <div className="mt-auto flex items-center justify-between pt-2">
+                          <div className="flex items-center rounded-full border border-line bg-surface-2 text-sm">
+                            <button
+                              type="button"
+                              className="px-2.5 py-1"
+                              // Con la última unidad, restar quita el producto: se confirma antes.
+                              onClick={() =>
+                                item.quantity <= 1 ? setConfirmRemove(item.key) : updateQty(item.key, item.quantity - 1)
+                              }
+                              aria-label="Restar"
+                            >
+                              −
+                            </button>
+                            <span className="w-6 text-center tabular-nums">{item.quantity}</span>
+                            <button
+                              type="button"
+                              className="px-2.5 py-1 disabled:opacity-30"
+                              onClick={() => updateQty(item.key, item.quantity + 1)}
+                              disabled={item.quantity >= (variantLimit(item.product, item.color, item.size) ?? Infinity)}
+                              aria-label="Sumar"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <span className="text-sm font-semibold tabular-nums">
+                            {formatPrice(item.product.price * item.quantity)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </li>
                 ))}
               </ul>
 
-              <CartAddress
-                saved={savedAddress}
-                draft={addressDraft}
-                onDraftChange={setAddressDraft}
-                onSave={(next) => {
-                  addressStore.save(next);
-                  setAddressDraft(null);
-                }}
-                onClear={() => {
-                  addressStore.clear();
-                  setAddressDraft(null);
-                }}
-                shipping={order.shipping}
-              />
+              {addressSection}
 
               {suggestions.length > 0 && (
                 <div className="border-t border-line px-5 py-4">
@@ -282,6 +343,12 @@ export function CartDrawer() {
                     </span>
                   </div>
                 )}
+                {order.shipping.status === "unset" && (
+                  <div className="flex justify-between text-muted">
+                    <span>Envío</span>
+                    <span>(sin especificar)</span>
+                  </div>
+                )}
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-widest text-muted">
@@ -292,11 +359,17 @@ export function CartDrawer() {
               <ul className="space-y-1.5 text-xs text-muted">
                 {order.shipping.status === "unset" && (
                   <li className="flex items-center gap-2">
-                    <TruckIcon className="size-4 text-accent" /> Elegí tu localidad arriba para ver el costo de envío.
+                    <span className="grid w-6 shrink-0 place-items-center">
+                      <TruckIcon className="size-4 text-accent" />
+                    </span>
+                    Elegí tu localidad arriba para ver el costo de envío.
                   </li>
                 )}
                 <li className="flex items-center gap-2">
-                  <CashIcon className="size-4 text-accent-2" /> Pagás recién cuando lo recibís. Cambio gratis 30 días.
+                  <span className="grid w-6 shrink-0 place-items-center">
+                    <Image src={mercadoPagoLogo} alt="Mercado Pago" sizes="24px" loading="eager" className="h-4 w-auto" />
+                  </span>
+                  Pagá en efectivo, transferencia o en cuotas al recibir.
                 </li>
               </ul>
               {pending && (

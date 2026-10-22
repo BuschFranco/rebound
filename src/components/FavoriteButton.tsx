@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
+import { flyToFavorites } from "@/lib/fx";
 import { StarIcon } from "./icons";
 
 /**
@@ -31,8 +32,11 @@ export function FavoriteButton({
   return (
     <button
       type="button"
-      onClick={() => {
-        if (!active) setPop(true);
+      onClick={(e) => {
+        if (!active) {
+          setPop(true);
+          flyToFavorites(e.currentTarget);
+        }
         toggle(productId);
       }}
       onAnimationEnd={() => setPop(false)}

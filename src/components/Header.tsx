@@ -42,23 +42,33 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-background/80 backdrop-blur-xl">
-      <div className="bg-accent-2 px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
-        {promos.length > 0 && (
+      {/* En el celular entra en una sola línea: la promo principal y su reloj (el resto, en el hero y el banner). */}
+      <div className="overflow-hidden whitespace-nowrap bg-accent-2 px-3 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-white sm:whitespace-normal sm:px-4 sm:text-[11px] sm:tracking-[0.2em]">
+        {promos.length > 0 ? (
           <>
-            {/* Para que la barra no ocupe media pantalla: 1 promo en el celular, 2 en la compu; el resto, en el banner. */}
             {promoHeadline(promos[0], allCategories)}
             {promos[1] && <span className="hidden sm:inline"> · {promoHeadline(promos[1], allCategories)}</span>}
-            {promos.length > 1 && (
-              <span className="sm:hidden">
-                {" "}
-                · +{promos.length - 1} {promos.length - 1 === 1 ? "promo" : "promos"}
-              </span>
-            )}
             {promos.length > 2 && <span className="hidden sm:inline"> · +{promos.length - 2} promos</span>} ·{" "}
-            <PromoCountdown promo={promos[0]} variant="inline" className="gap-1" /> ·{" "}
+            <PromoCountdown
+              promo={promos[0]}
+              variant="inline"
+              label={<span className="hidden sm:inline">Termina en</span>}
+              className="gap-1"
+            />
+            <span className="hidden sm:inline">
+              {" "}
+              · Pagás al recibir, también en cuotas · Envíos en CABA y PBA · Cambio gratis {POLICIES.exchangeDays} días
+            </span>
+          </>
+        ) : (
+          <>
+            Pagás al recibir, también en cuotas
+            <span className="hidden sm:inline">
+              {" "}
+              · Envíos en CABA y PBA · Cambio gratis {POLICIES.exchangeDays} días
+            </span>
           </>
         )}
-        Pagás al recibir · Envíos en CABA y PBA · Cambio gratis {POLICIES.exchangeDays} días
       </div>
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
         <button

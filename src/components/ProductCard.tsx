@@ -62,6 +62,11 @@ export function ProductCard({
                   -{off}%
                 </span>
               )}
+              {product.isBestSeller && (
+                <span className="rounded bg-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-black">
+                  🔥 Más vendido
+                </span>
+              )}
               {product.isNew && (
                 <span className="rounded bg-accent-2 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                   Nuevo

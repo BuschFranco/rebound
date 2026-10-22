@@ -50,6 +50,7 @@ function toProduct(row: ProductRow, now: number): Product {
     highlights: row.highlights,
     publishedAt,
     isNew: now - publishedAt < NEW_PRODUCT_MS,
+    isBestSeller: false,
   };
 }
 
@@ -114,7 +115,7 @@ function toZone(row: ZoneRow): ShippingZone {
 
 async function fetchCatalog({ fresh }: { fresh: boolean }): Promise<Catalog> {
   const supabase = createCatalogClient({ fresh });
-  const [categories, products, zones, promotions, banners] = await Promise.all([
+  const [categories, products, zones, promotions, banners, bestSellers] = await Promise.all([
     supabase.from("categories").select("*").order("sort_order"),
     supabase.from("products").select("*").order("sort_order").order("created_at"),
     supabase
@@ -128,6 +129,7 @@ async function fetchCatalog({ fresh }: { fresh: boolean }): Promise<Catalog> {
       .gt("ends_at", new Date().toISOString())
       .order("starts_at"),
     supabase.from("site_banners").select("*"),
+    supabase.rpc("best_sellers"),
   ]);
   if (categories.error) throw new Error(`No se pudieron leer las categorías: ${categories.error.message}`);
   if (products.error) throw new Error(`No se pudieron leer los productos: ${products.error.message}`);
@@ -135,9 +137,11 @@ async function fetchCatalog({ fresh }: { fresh: boolean }): Promise<Catalog> {
   if (promotions.error) throw new Error(`No se pudo leer la promoción: ${promotions.error.message}`);
 
   const fetchedAt = Date.now();
+  // Si la función no existe todavía en la base (migración sin aplicar) o falla, no hay "Más vendido".
+  const topSellers = new Set((bestSellers.data ?? []).map((r) => r.product_id));
   return {
     categories: categories.data.map(toCategory),
-    products: products.data.map((row) => toProduct(row, fetchedAt)),
+    products: products.data.map((row) => ({ ...toProduct(row, fetchedAt), isBestSeller: topSellers.has(row.id) })),
     shippingZones: (zones.data as ZoneRow[]).map(toZone),
     promotions: promotions.data.flatMap((row) => toPromotion(row) ?? []),
     // Si la tabla no responde, el banner de ofertas usa los textos automáticos.

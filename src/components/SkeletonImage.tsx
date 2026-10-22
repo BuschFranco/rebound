@@ -7,7 +7,17 @@ import { useCallback, useState } from "react";
  * `next/image` con bone loader: mientras la foto carga se ve un bloque que pulsa en su lugar
  * y la foto aparece con un fundido. Pensado para imágenes `fill` (el contenedor debe ser `relative`).
  */
-export function SkeletonImage({ alt, className = "", onLoad, onError, ...props }: ImageProps) {
+export function SkeletonImage({
+  alt,
+  className = "",
+  skeletonClassName = "",
+  onLoad,
+  onError,
+  ...props
+}: ImageProps & {
+  /** Clases extra del bloque que pulsa (p. ej. `-z-20` cuando la imagen es un fondo). */
+  skeletonClassName?: string;
+}) {
   const [loaded, setLoaded] = useState(false);
 
   // Si la foto ya estaba en caché, puede terminar de cargar antes de hidratar y no disparar onLoad.
@@ -17,7 +27,7 @@ export function SkeletonImage({ alt, className = "", onLoad, onError, ...props }
 
   return (
     <>
-      {!loaded && <span aria-hidden className="skeleton absolute inset-0" />}
+      {!loaded && <span aria-hidden className={`skeleton absolute inset-0 ${skeletonClassName}`} />}
       <Image
         {...props}
         alt={alt}

@@ -4,7 +4,14 @@ import { useId } from "react";
 import { isEmptyAddress } from "@/lib/addressStore";
 import type { OrderShipping } from "@/lib/order";
 import type { SavedAddress } from "@/types";
+import { formatLocation, formatStreetAddress } from "@/lib/shipping";
 import { ShippingLocationPicker } from "./ShippingLocationPicker";
+
+/** "Av. Corrientes 6120 · Villa Crespo (CABA)": lo que el cliente guardó, para que lo reconozca. */
+function savedSummary(address: SavedAddress) {
+  const parts = [formatStreetAddress(address), address.location ? formatLocation(address.location) : ""];
+  return parts.filter(Boolean).join(" · ") || "Ubicación guardada";
+}
 
 const FIELD =
   "w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/25";
@@ -47,8 +54,7 @@ export function CartAddress({
               <span className="grid size-4 place-items-center rounded-full bg-whatsapp text-[10px] font-bold text-black">
                 ✓
               </span>
-              Ubicación guardada
-              {saved.location && <span className="truncate text-xs text-muted">· {saved.location.nombre}</span>}
+              <span className="truncate">{savedSummary(saved)}</span>
             </p>
           </div>
           <button

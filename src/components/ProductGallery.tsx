@@ -1,7 +1,6 @@
 "use client";
 
 import { useLenis } from "lenis/react";
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { CloseIcon } from "./icons";
 import { SkeletonImage } from "./SkeletonImage";
@@ -75,7 +74,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
         {current !== null && (
           <div className="relative flex h-full w-full items-center justify-center" onClick={(e) => e.target === e.currentTarget && close()}>
             <div className="relative h-[85dvh] w-[92vw] max-w-5xl">
-              <Image
+              <SkeletonImage
                 key={images[current]}
                 src={images[current]}
                 alt={alt(current)}
