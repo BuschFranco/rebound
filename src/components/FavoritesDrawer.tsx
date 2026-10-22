@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useFavorites } from "@/context/FavoritesContext";
+import { slideOut } from "@/lib/fx";
 import { availableColors, availableSizes, getCategoryLabel } from "@/lib/products";
 import type { Product } from "@/types";
 import { CloseIcon, StarIcon } from "./icons";
@@ -158,7 +159,11 @@ function FavoriteRow({ product: p, onNavigate }: { product: Product; onNavigate:
           </div>
           <button
             type="button"
-            onClick={() => remove(p.id)}
+            onClick={async (e) => {
+              const row = e.currentTarget.closest("li");
+              if (row) await slideOut(row);
+              remove(p.id);
+            }}
             className="grid size-8 shrink-0 place-items-center rounded-full text-muted transition hover:bg-surface-2 hover:text-accent"
             aria-label={`Quitar ${p.name} de favoritos`}
           >
