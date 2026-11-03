@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Publica una versión ya compilada (la sube GitHub Actions a /srv/rebound/incoming/<commit>.tgz).
+# Uso (como deploy): rebound-deploy <commit>
+# Si la versión nueva no responde, vuelve sola a la anterior.
+set -euo pipefail
+
+SHA="${1:-}"
+[[ "$SHA" =~ ^[0-9a-f]{7,40}$ ]] || { echo "Commit inválido: '$SHA'"; exit 1; }
+
+ROOT=/srv/rebound
+ARCHIVE="$ROOT/incoming/$SHA.tgz"
+DEST="$ROOT/releases/$SHA"
+[ -f "$ARCHIVE" ] || { echo "No existe $ARCHIVE"; exit 1; }
+
+umask 002
+rm -rf "$DEST"
+mkdir -p "$DEST"
+tar -xzf "$ARCHIVE" -C "$DEST"
+# La app guarda acá su caché de páginas (ISR): tiene que poder escribir el grupo rebound.
+mkdir -p "$DEST/.next/cache"
+chmod -R g+w "$DEST/.next"
+
+PREVIOUS="$(readlink -f "$ROOT/current" 2>/dev/null || true)"
+switch_to() {
+  ln -sfn "$1" "$ROOT/current.tmp"
+  mv -T "$ROOT/current.tmp" "$ROOT/current"
+  sudo /usr/bin/systemctl restart rebound
+}
+
+healthy() {
+  for _ in $(seq 1 30); do
+    if curl -fsS -o /dev/null --max-time 5 http://127.0.0.1:3000/; then return 0; fi
+    sleep 2
+  done
+  return 1
+}
+
+switch_to "$DEST"
+if healthy; then
+  echo "Publicado $SHA"
+else
+  echo "La versión $SHA no responde."
+  if [ -n "$PREVIOUS" ] && [ -d "$PREVIOUS" ] && [ "$PREVIOUS" != "$DEST" ]; then
+    echo "Volviendo a $(basename "$PREVIOUS")"
+    switch_to "$PREVIOUS"
+  fi
+  exit 1
+fi
+
+# Limpieza: se guardan las últimas 3 versiones para poder volver atrás.
+rm -f "$ARCHIVE"
+ls -1dt "$ROOT"/releases/*/ | tail -n +4 | xargs -r rm -rf

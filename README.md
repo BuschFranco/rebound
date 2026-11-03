@@ -193,3 +193,13 @@ El panel ya avisa al sitio al guardar. Si editás directo en Studio, los cambios
 
 - **Dominio:** `reboundstore.com.ar`, registrado en [NIC Argentina](https://nic.ar) y delegado a Cloudflare (`camilo.ns.cloudflare.com`, `lauryn.ns.cloudflare.com`). En Cloudflare, `@` y `www` son CNAME a `reboundstore.netlify.app` **sin proxy** (nube gris): así Netlify emite el certificado HTTPS. En Netlify, el dominio principal es `reboundstore.com.ar` y `www` es alias.
 - **Correo:** `contacto@reboundstore.com.ar` se reenvía a Gmail con *Email Routing* de Cloudflare (registros MX, SPF y DKIM cargados por Cloudflare). Solo recibe: las respuestas salen desde Gmail.
+
+## VPS (Hetzner)
+
+La tienda también se publica en una VPS propia (`2.31.106.97`, Ubuntu 22.04, Falkenstein) con cada push a `main`, mediante GitHub Actions (`.github/workflows/deploy-vps.yml`).
+
+- **Cómo funciona:** GitHub compila la versión `standalone` de Next (la VPS tiene 1 GB de RAM, no compila), la sube por SSH con el usuario `deploy` y corre `rebound-deploy <commit>` en el servidor. Ese script descomprime en `/srv/rebound/releases/<commit>`, apunta `/srv/rebound/current` ahí, reinicia el servicio y comprueba que responda; si no responde, vuelve solo a la versión anterior. Se guardan las últimas 3.
+- **En el servidor:** servicio `rebound` (systemd, usuario `rebound`, puerto 3000 local), Caddy adelante (80/443), firewall con solo SSH/HTTP/HTTPS, fail2ban, swap de 2 GB, actualizaciones de seguridad automáticas y SSH solo con clave. Variables de la app en `/etc/rebound/rebound.env`.
+- **Secrets del repo (GitHub → Settings → Secrets → Actions):** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_SITE_URL`, `REVALIDATE_SECRET` (los mismos valores que en `/etc/rebound/rebound.env`), `VPS_HOST`, `VPS_SSH_KEY` (clave privada del usuario `deploy`) y `VPS_KNOWN_HOSTS` (huella del servidor).
+- **Scripts:** `deploy/vps/provision.sh` (prepara el servidor; se puede volver a correr) y `deploy/vps/rebound-deploy` (publica una versión).
+- **Comandos útiles** (como root): `systemctl status rebound`, `journalctl -u rebound -n 100`, `ls -lt /srv/rebound/releases`. Volver a una versión anterior: `ln -sfn /srv/rebound/releases/<commit> /srv/rebound/current && systemctl restart rebound`.

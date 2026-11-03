@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { BUSINESS } from "@/data/business";
-import { HERO_IMAGE } from "@/data/site";
+import ogImage from "@/app/og-image.png";
 import { absoluteUrl } from "./site";
+
+/** Imagen al compartir un link (WhatsApp, redes): el logo sobre el fondo de la marca, 1200×630. */
+const DEFAULT_SHARE_IMAGE = { url: ogImage.src, width: ogImage.width, height: ogImage.height, alt: "REBOUND · Basketball Store" };
 
 export const SITE_DESCRIPTION =
   "Indumentaria y zapatillas de basket de las mejores marcas, para la cancha y la calle. Pedí por WhatsApp y pagá al recibir en CABA y Provincia de Buenos Aires.";
@@ -11,14 +14,15 @@ export function pageMetadata({
   title,
   description,
   path,
-  images = [HERO_IMAGE],
+  images = [DEFAULT_SHARE_IMAGE],
   type = "website",
   index = true,
 }: {
   title?: string;
   description: string;
   path: string;
-  images?: string[];
+  /** Fotos del producto (URL) o la imagen de la marca por defecto. */
+  images?: (string | typeof DEFAULT_SHARE_IMAGE)[];
   type?: "website" | "article";
   index?: boolean;
 }): Metadata {

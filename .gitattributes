@@ -1,0 +1,2 @@
+# Scripts que corren en la VPS (Linux): siempre con saltos de línea LF.
+deploy/vps/* text eol=lf

@@ -1,0 +1,63 @@
+# Publica la tienda en la VPS de Hetzner en cada push a main.
+# Compila acá (la VPS tiene 1 GB de RAM) y sube solo la versión "standalone" lista para correr.
+# Secrets del repo: SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, NEXT_PUBLIC_WHATSAPP_NUMBER,
+# NEXT_PUBLIC_SITE_URL, REVALIDATE_SECRET, VPS_HOST, VPS_SSH_KEY y VPS_KNOWN_HOSTS (ver README).
+name: Deploy VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Un deploy a la vez; si llegan dos pushes seguidos, se publica el último.
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_OUTPUT: standalone
+      DEPLOY_TARGET: vps
+      NEXT_TELEMETRY_DISABLED: "1"
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+      NEXT_PUBLIC_WHATSAPP_NUMBER: ${{ secrets.NEXT_PUBLIC_WHATSAPP_NUMBER }}
+      NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+      REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Empaquetar la versión standalone
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          if [ -d public ]; then cp -r public .next/standalone/public; fi
+          tar -czf rebound.tgz -C .next/standalone .
+
+      - name: Subir y publicar en la VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          SSH="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes"
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes rebound.tgz "deploy@$VPS_HOST:/srv/rebound/incoming/$GITHUB_SHA.tgz"
+          $SSH "deploy@$VPS_HOST" "rebound-deploy $GITHUB_SHA"

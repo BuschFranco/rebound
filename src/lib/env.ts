@@ -19,8 +19,8 @@ export function checkProductionEnv(env: NodeJS.ProcessEnv = process.env) {
   if (phone && (phone.length < 10 || phone.length > 15)) {
     problems.push("NEXT_PUBLIC_WHATSAPP_NUMBER: tiene que ser el número internacional sin + (ej. 5491112345678)");
   }
-  // En el deploy real (Netlify) se exige todo lo de producción; en un build local se aceptan valores de prueba.
-  const deploying = env.NETLIFY === "true";
+  // En el deploy real (Netlify o la VPS) se exige todo lo de producción; en un build local se aceptan valores de prueba.
+  const deploying = env.NETLIFY === "true" || env.DEPLOY_TARGET === "vps";
   if (deploying && phone === "5491100000000") {
     problems.push("NEXT_PUBLIC_WHATSAPP_NUMBER: es el número de ejemplo, poné el real");
   }
@@ -34,7 +34,7 @@ export function checkProductionEnv(env: NodeJS.ProcessEnv = process.env) {
 
   if (problems.length) {
     throw new Error(
-      `Variables de entorno con problemas (configuralas en Netlify → Site configuration → Environment variables):\n` +
+      `Variables de entorno con problemas (configuralas en los secrets del repo en GitHub para la VPS, o en Netlify → Environment variables):\n` +
         problems.map((p) => `  • ${p}`).join("\n"),
     );
   }

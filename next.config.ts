@@ -7,6 +7,8 @@ const isDev = process.env.NODE_ENV === "development";
 checkProductionEnv();
 
 const nextConfig: NextConfig = {
+  // En la VPS se publica la versión "standalone" (server.js con solo lo necesario); Netlify usa su adaptador.
+  ...(process.env.NEXT_OUTPUT === "standalone" ? { output: "standalone" as const } : {}),
   // Las URLs del sitio terminan en "/" (canonical, sitemap y links de WhatsApp ya las usan así).
   trailingSlash: true,
   images: {
