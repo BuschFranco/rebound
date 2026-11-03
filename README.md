@@ -2,13 +2,13 @@
 
 Tienda de indumentaria y zapatillas de basket hecha con Next.js 16 (App Router, Tailwind CSS 4) y **Supabase** (PostgreSQL) como base de datos del catálogo. Estética oscura con acentos naranja/morado. El cliente arma su carrito (talle, color y cantidad) y al tocar **Comprar por WhatsApp** se abre un chat con el pedido ya escrito. El envío se coordina por chat y se paga al recibir.
 
-**Tienda publicada:** https://reboundstore.netlify.app
+**Tienda publicada:** https://reboundstore.com.ar (también responde en https://reboundstore.netlify.app, que redirige al dominio)
 
 ## Cómo está armado hoy
 
 | Pieza | Dónde | Notas |
 | --- | --- | --- |
-| Sitio (Next.js) | **Netlify** → https://reboundstore.netlify.app | Se publica solo con cada push a `main` (`netlify.toml`). |
+| Sitio (Next.js) | **Netlify** → https://reboundstore.com.ar | Se publica solo con cada push a `main` (`netlify.toml`). |
 | Base de datos y fotos | **Supabase en la nube** (proyecto `ryzwqsbbfqjzcyqykglp`) | Catálogo, promos, envíos, banners, pedidos y el bucket `catalog-images`. |
 | Panel de administración | **Tu PC** (`admin/iniciar.bat`) | Escribe directo en la base de la nube y avisa al sitio publicado para que se actualice al instante. |
 | Código | GitHub → `BuschFranco/rebound` | |
@@ -116,7 +116,7 @@ Cómo abrirlo:
 | `SUPABASE_PUBLISHABLE_KEY` | Clave **publishable** del proyecto (Project Settings → API Keys). Es pública: solo permite leer gracias a RLS. |
 | `REVALIDATE_SECRET` | Clave para `/api/revalidate/`. Larga y aleatoria; **la misma** en `.env.local`, en `admin/.env` y en Netlify. |
 
-El panel tiene su propio archivo, `admin/.env` (no se sube a git): `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (la *secret key* del proyecto, acceso total: nunca en el sitio ni en Netlify), `SITE_URL=https://reboundstore.netlify.app` y el mismo `REVALIDATE_SECRET`.
+El panel tiene su propio archivo, `admin/.env` (no se sube a git): `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (la *secret key* del proyecto, acceso total: nunca en el sitio ni en Netlify), `SITE_URL=https://reboundstore.com.ar` y el mismo `REVALIDATE_SECRET`.
 
 ## Dónde tocar
 
@@ -169,7 +169,7 @@ Cada push a `main` publica una versión nueva en Netlify (tarda un par de minuto
 | `SUPABASE_PUBLISHABLE_KEY` | la *publishable key* del proyecto |
 | `REVALIDATE_SECRET` | la misma que en `.env.local` y `admin/.env` |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | el número que recibe los pedidos (sin `+`, espacios ni guiones) |
-| `NEXT_PUBLIC_SITE_URL` | `https://reboundstore.netlify.app` (o tu dominio propio, si conectás uno) |
+| `NEXT_PUBLIC_SITE_URL` | `https://reboundstore.com.ar` |
 
 La *secret key* de Supabase y la contraseña de la base **no** van en Netlify. Después de cambiar una variable: *Deploys → Trigger deploy*.
 
@@ -187,4 +187,9 @@ npx supabase db push --db-url "postgresql://postgres:TU_CONTRASEÑA@db.ryzwqsbbf
 
 ### Cambios hechos desde Supabase Studio (opcional)
 
-El panel ya avisa al sitio al guardar. Si editás directo en Studio, los cambios aparecen en hasta 1 minuto; para que sea al instante, en *Database → Webhooks* creá uno para `INSERT`, `UPDATE` y `DELETE` en `products`, `categories`, `promotions`, `site_banners`, `shipping_zones` y `shipping_zone_areas` que haga `POST` a `https://reboundstore.netlify.app/api/revalidate/` con el header `x-revalidate-secret`.
+El panel ya avisa al sitio al guardar. Si editás directo en Studio, los cambios aparecen en hasta 1 minuto; para que sea al instante, en *Database → Webhooks* creá uno para `INSERT`, `UPDATE` y `DELETE` en `products`, `categories`, `promotions`, `site_banners`, `shipping_zones` y `shipping_zone_areas` que haga `POST` a `https://reboundstore.com.ar/api/revalidate/` con el header `x-revalidate-secret`.
+
+## Dominio y correo
+
+- **Dominio:** `reboundstore.com.ar`, registrado en [NIC Argentina](https://nic.ar) y delegado a Cloudflare (`camilo.ns.cloudflare.com`, `lauryn.ns.cloudflare.com`). En Cloudflare, `@` y `www` son CNAME a `reboundstore.netlify.app` **sin proxy** (nube gris): así Netlify emite el certificado HTTPS. En Netlify, el dominio principal es `reboundstore.com.ar` y `www` es alias.
+- **Correo:** `contacto@reboundstore.com.ar` se reenvía a Gmail con *Email Routing* de Cloudflare (registros MX, SPF y DKIM cargados por Cloudflare). Solo recibe: las respuestas salen desde Gmail.

@@ -9,7 +9,7 @@ export const BUSINESS = {
   cuit: "COMPLETAR XX-XXXXXXXX-X",
   taxCondition: "COMPLETAR Monotributo / Responsable inscripto",
   address: "Av. Corrientes 6120, Ciudad Autónoma de Buenos Aires",
-  email: "francobusch130@gmail.com",
+  email: "contacto@reboundstore.com.ar",
   /** Horario de atención por WhatsApp y email. */
   hours: "Lunes a viernes de 10 a 18 h",
   /**
