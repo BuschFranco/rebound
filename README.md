@@ -2,13 +2,13 @@
 
 Tienda de indumentaria y zapatillas de basket hecha con Next.js 16 (App Router, Tailwind CSS 4) y **Supabase** (PostgreSQL) como base de datos del catálogo. Estética oscura con acentos naranja/morado. El cliente arma su carrito (talle, color y cantidad) y al tocar **Comprar por WhatsApp** se abre un chat con el pedido ya escrito. El envío se coordina por chat y se paga al recibir.
 
-**Tienda publicada:** https://reboundstore.com.ar (también responde en https://reboundstore.netlify.app, que redirige al dominio)
+**Tienda publicada:** https://reboundstore.com.ar (VPS de Hetzner, ver "VPS"). Netlify sigue publicando cada push en https://reboundstore.netlify.app como respaldo.
 
 ## Cómo está armado hoy
 
 | Pieza | Dónde | Notas |
 | --- | --- | --- |
-| Sitio (Next.js) | **Netlify** → https://reboundstore.com.ar | Se publica solo con cada push a `main` (`netlify.toml`). |
+| Sitio (Next.js) | **VPS Hetzner** → https://reboundstore.com.ar (respaldo: Netlify → https://reboundstore.netlify.app) | Se publica solo con cada push a `main` (`netlify.toml`). |
 | Base de datos y fotos | **Supabase en la nube** (proyecto `ryzwqsbbfqjzcyqykglp`) | Catálogo, promos, envíos, banners, pedidos y el bucket `catalog-images`. |
 | Panel de administración | **Tu PC** (`admin/iniciar.bat`) | Escribe directo en la base de la nube y avisa al sitio publicado para que se actualice al instante. |
 | Código | GitHub → `BuschFranco/rebound` | |
@@ -191,7 +191,7 @@ El panel ya avisa al sitio al guardar. Si editás directo en Studio, los cambios
 
 ## Dominio y correo
 
-- **Dominio:** `reboundstore.com.ar`, registrado en [NIC Argentina](https://nic.ar) y delegado a Cloudflare (`camilo.ns.cloudflare.com`, `lauryn.ns.cloudflare.com`). En Cloudflare, `@` y `www` son CNAME a `reboundstore.netlify.app` **sin proxy** (nube gris): así Netlify emite el certificado HTTPS. En Netlify, el dominio principal es `reboundstore.com.ar` y `www` es alias.
+- **Dominio:** `reboundstore.com.ar`, registrado en [NIC Argentina](https://nic.ar) y delegado a Cloudflare (`camilo.ns.cloudflare.com`, `lauryn.ns.cloudflare.com`). En Cloudflare, `@` y `www` son registros **A a la VPS (`2.31.106.97`) con proxy** (nube naranja), SSL en **Full (strict)** y **Always Use HTTPS**. En la VPS, Caddy sirve el dominio con su propio certificado de Let's Encrypt y redirige `www` al dominio principal (`deploy/vps/Caddyfile`). Para volver a Netlify: `deploy/vps/dns-rollback-netlify.ps1` (usa el token de `.cloudflare-token`).
 - **Correo:** `contacto@reboundstore.com.ar` se reenvía a Gmail con *Email Routing* de Cloudflare (registros MX, SPF y DKIM cargados por Cloudflare). Solo recibe: las respuestas salen desde Gmail.
 
 ## VPS (Hetzner)
@@ -201,5 +201,5 @@ La tienda también se publica en una VPS propia (`2.31.106.97`, Ubuntu 22.04, Fa
 - **Cómo funciona:** GitHub compila la versión `standalone` de Next (la VPS tiene 1 GB de RAM, no compila), la sube por SSH con el usuario `deploy` y corre `rebound-deploy <commit>` en el servidor. Ese script descomprime en `/srv/rebound/releases/<commit>`, apunta `/srv/rebound/current` ahí, reinicia el servicio y comprueba que responda; si no responde, vuelve solo a la versión anterior. Se guardan las últimas 3.
 - **En el servidor:** servicio `rebound` (systemd, usuario `rebound`, puerto 3000 local), Caddy adelante (80/443), firewall con solo SSH/HTTP/HTTPS, fail2ban, swap de 2 GB, actualizaciones de seguridad automáticas y SSH solo con clave. Variables de la app en `/etc/rebound/rebound.env`.
 - **Secrets del repo (GitHub → Settings → Secrets → Actions):** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_SITE_URL`, `REVALIDATE_SECRET` (los mismos valores que en `/etc/rebound/rebound.env`), `VPS_HOST`, `VPS_SSH_KEY` (clave privada del usuario `deploy`) y `VPS_KNOWN_HOSTS` (huella del servidor).
-- **Scripts:** `deploy/vps/provision.sh` (prepara el servidor; se puede volver a correr) y `deploy/vps/rebound-deploy` (publica una versión).
+- **Scripts:** `deploy/vps/provision.sh` (prepara el servidor; se puede volver a correr), `deploy/vps/rebound-deploy` (publica una versión) y `deploy/vps/Caddyfile` (config de Caddy; se copia a `/etc/caddy/Caddyfile` y se recarga con `systemctl reload caddy`).
 - **Comandos útiles** (como root): `systemctl status rebound`, `journalctl -u rebound -n 100`, `ls -lt /srv/rebound/releases`. Volver a una versión anterior: `ln -sfn /srv/rebound/releases/<commit> /srv/rebound/current && systemctl restart rebound`.

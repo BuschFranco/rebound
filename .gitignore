@@ -57,3 +57,6 @@ admin/.cache/
 
 # Vínculo local del CLI de Netlify
 .netlify
+
+# Copia local del REVALIDATE_SECRET para el panel (no se sube)
+revalidate-secret.txt

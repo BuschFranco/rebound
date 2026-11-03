@@ -1,0 +1,25 @@
+# Caddy en la VPS (/etc/caddy/Caddyfile). Cloudflare (nube naranja) está adelante: el certificado de
+# Let's Encrypt para el origen se emite solo y Cloudflare se conecta en modo "Full (strict)".
+{
+	email contacto@reboundstore.com.ar
+	# La redirección a https la hace Cloudflare ("Always Use HTTPS"); acá no, para no generar bucles.
+	auto_https disable_redirects
+}
+
+(app) {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+}
+
+reboundstore.com.ar, http://reboundstore.com.ar {
+	import app
+}
+
+www.reboundstore.com.ar, http://www.reboundstore.com.ar {
+	redir https://reboundstore.com.ar{uri} permanent
+}
+
+# Acceso directo por la IP (pruebas).
+:80 {
+	import app
+}
