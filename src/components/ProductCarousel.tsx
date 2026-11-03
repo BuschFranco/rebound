@@ -22,7 +22,7 @@ export function ProductCarousel({
   /** En lugar de un link, una acción (ej. abrir el panel de favoritos). Solo desde componentes cliente. */
   onViewMore?: () => void;
   viewMoreLabel?: string;
-  /** Nombre accesible de la fila (ej. "Drop nuevo"). */
+  /** Nombre accesible de la fila (ej. "Recién llegados"). */
   label: string;
 }) {
   return (

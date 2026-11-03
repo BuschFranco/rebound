@@ -55,10 +55,10 @@ export const DELIVERY = {
   label: "24 a 72 h hábiles",
 } as const;
 
-/** Bloque "Detrás de la marca". Reemplazalo por la historia real del equipo. */
+/** Bloque "Quiénes somos". Reemplazalo por la historia real del equipo (vendemos varias marcas: no somos fabricantes). */
 export const STORY = {
-  title: "Hecho por gente que juega",
-  text: "REBOUND nació en las canchas: queríamos ropa de basket que aguante el partido del sábado y quede bien en la calle, sin pagar precios de importado. Elegimos cada tela y cada molde, y respondemos cada pedido nosotros mismos. Si algo no está bien, escribinos y lo resolvemos.",
+  title: "Elegido por gente que juega",
+  text: "REBOUND nació en las canchas: queríamos un solo lugar para encontrar ropa y zapatillas de basket de distintas marcas, sin dar mil vueltas. Elegimos cada producto pensando en que aguante el partido del sábado y quede bien en la calle, y respondemos cada pedido nosotros mismos. Si algo no está bien, escribinos y lo resolvemos.",
   signature: "El equipo de REBOUND",
 } as const;
 

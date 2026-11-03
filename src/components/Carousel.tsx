@@ -20,7 +20,7 @@ export function Carousel({
   children,
   arrowTop = "top-1/2",
 }: {
-  /** Nombre accesible de la fila (ej. "Drop nuevo"). */
+  /** Nombre accesible de la fila (ej. "Recién llegados"). */
   label: string;
   children: ReactNode;
   /** Altura de las flechas (clase de Tailwind), para centrarlas sobre las imágenes. */

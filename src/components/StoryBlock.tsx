@@ -3,7 +3,7 @@ import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { LogoMark } from "./Logo";
 import { WhatsAppIcon } from "./icons";
 
-/** "Detrás de la marca": una voz humana cerca del momento de compra genera confianza. */
+/** "Quiénes somos": una voz humana cerca del momento de compra genera confianza. */
 export function StoryBlock({ className = "" }: { className?: string }) {
   return (
     <section
@@ -13,7 +13,7 @@ export function StoryBlock({ className = "" }: { className?: string }) {
       <div className="relative grid items-center gap-6 sm:grid-cols-[auto_1fr]">
         <LogoMark className="size-16 sm:size-20" />
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-accent">Detrás de la marca</p>
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-accent">Quiénes somos</p>
           <h2 className="mt-2 font-display text-3xl uppercase italic leading-none sm:text-4xl">
             {STORY.title}
           </h2>

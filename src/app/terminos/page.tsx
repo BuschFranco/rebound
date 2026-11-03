@@ -124,7 +124,8 @@ export default async function TermsPage() {
       <h2>9. Propiedad intelectual</h2>
       <p>
         La marca {BUSINESS.brand}, el logo, los textos y el diseño del sitio pertenecen a su
-        titular. No pueden usarse sin autorización.
+        titular. No pueden usarse sin autorización. Las marcas, nombres y logos de los productos que
+        vendemos pertenecen a sus respectivos fabricantes.
       </p>
 
       <h2>10. Reclamos</h2>

@@ -45,7 +45,7 @@ export function sortByNewest(products: Product[]) {
   return [...products].sort((a, b) => b.publishedAt - a.publishedAt);
 }
 
-/** "Drop nuevo": los últimos publicados (tengan o no la etiqueta "Nuevo", que dura NEW_PRODUCT_DAYS). */
+/** "Recién llegados": los últimos publicados (tengan o no la etiqueta "Nuevo", que dura NEW_PRODUCT_DAYS). */
 export function getLatestProducts(products: Product[], limit = 4) {
   return sortByNewest(products).slice(0, limit);
 }

@@ -23,19 +23,19 @@ import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
   description:
-    "Indumentaria y zapatillas de basket. Armá tu pedido, mandalo por WhatsApp y pagá recién cuando lo recibís. Envíos en CABA y Provincia de Buenos Aires.",
+    "Indumentaria y zapatillas de basket de las mejores marcas. Armá tu pedido, mandalo por WhatsApp y pagá recién cuando lo recibís. Envíos en CABA y Provincia de Buenos Aires.",
   path: "/",
 });
 
 const MARQUEE: { text: string; promo?: boolean }[] = [
-  { text: "Drop nuevo" },
+  { text: "Las mejores marcas de basket" },
   { text: "Pedí por WhatsApp" },
   { text: `Entrega en ${DELIVERY.label}` },
   { text: "Envíos en CABA y Provincia de Bs. As." },
   { text: "Pagás al recibir" },
   { text: "Cuotas con Mercado Pago al recibir" },
   { text: `Cambio gratis ${POLICIES.exchangeDays} días` },
-  { text: "Hecho para la cancha y la calle" },
+  { text: "Para la cancha y la calle" },
 ];
 
 export default async function Home() {
@@ -180,16 +180,16 @@ export default async function Home() {
       {/* Para quien vuelve: vistos y relacionados (historial local, sin registro) */}
       <PersonalizedSections />
 
-      {/* Drop nuevo: los últimos productos publicados (por published_at) */}
+      {/* Recién llegados: los últimos productos publicados (por published_at) */}
       {latest.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">
           <SectionHeading
-            eyebrow={hasNew ? "Recién llegado" : "Lo último"}
-            title="Drop nuevo"
+            eyebrow={hasNew ? "Nuevos ingresos" : "Lo último"}
+            title="Recién llegados"
             href="/catalogo?orden=nuevos"
             linkLabel="Ver lo más nuevo"
           />
-          <ProductCarousel products={latest} categories={categories} viewMoreHref="/catalogo?orden=nuevos" label="Drop nuevo" />
+          <ProductCarousel products={latest} categories={categories} viewMoreHref="/catalogo?orden=nuevos" label="Recién llegados" />
         </section>
       )}
 

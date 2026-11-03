@@ -4,7 +4,7 @@ import { HERO_IMAGE } from "@/data/site";
 import { absoluteUrl } from "./site";
 
 export const SITE_DESCRIPTION =
-  "Indumentaria y zapatillas de basket. Hecho para la cancha y la calle. Pedí por WhatsApp y pagá al recibir en CABA y Provincia de Buenos Aires.";
+  "Indumentaria y zapatillas de basket de las mejores marcas, para la cancha y la calle. Pedí por WhatsApp y pagá al recibir en CABA y Provincia de Buenos Aires.";
 
 /** Metadata de una página con canonical, Open Graph y Twitter coherentes. */
 export function pageMetadata({
