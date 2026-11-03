@@ -57,8 +57,8 @@ export const DELIVERY = {
 
 /** Bloque "Quiénes somos". Reemplazalo por la historia real del equipo (vendemos varias marcas: no somos fabricantes). */
 export const STORY = {
-  title: "Elegido por gente que juega",
-  text: "REBOUND nació en las canchas: queríamos un solo lugar para encontrar ropa y zapatillas de basket de distintas marcas, sin dar mil vueltas. Elegimos cada producto pensando en que aguante el partido del sábado y quede bien en la calle, y respondemos cada pedido nosotros mismos. Si algo no está bien, escribinos y lo resolvemos.",
+  title: "De la cancha a tu casa",
+  text: "Somos jugadores antes que vendedores. Cansados de buscar en mil lugares, armamos REBOUND: las mejores marcas de basket, elegidas por gente que juega, con atención por WhatsApp de persona a persona.",
   signature: "El equipo de REBOUND",
 } as const;
 
