@@ -19,8 +19,8 @@ export default async function TermsPage() {
     <LegalPage title="Términos y condiciones" current="/terminos">
       <h2>1. Quiénes somos</h2>
       <p>
-        Este sitio es operado por <strong>{BUSINESS.legalName}</strong> (&ldquo;{BUSINESS.brand}&rdquo;), con
-        domicilio en {BUSINESS.address}. Contacto: {BUSINESS.email} y WhatsApp ({BUSINESS.hours}).
+        Este sitio es operado por <strong>{BUSINESS.legalName}</strong> (&ldquo;{BUSINESS.brand}&rdquo;), CUIT{" "}
+        {BUSINESS.cuit}, con domicilio en {BUSINESS.address}. Contacto: {BUSINESS.email} y WhatsApp ({BUSINESS.hours}).
       </p>
       <p>
         Al usar el sitio y enviar un pedido aceptás estos términos. Se aplican junto con la Ley

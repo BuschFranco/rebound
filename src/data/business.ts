@@ -5,8 +5,8 @@
  */
 export const BUSINESS = {
   brand: "REBOUND",
-  legalName: "Franco Busch",
-  cuit: "COMPLETAR XX-XXXXXXXX-X",
+  legalName: "Busch Franco Javier",
+  cuit: "20-43200536-5",
   taxCondition: "COMPLETAR Monotributo / Responsable inscripto",
   address: "Av. Corrientes 6120, Ciudad Autónoma de Buenos Aires",
   email: "contacto@reboundstore.com.ar",

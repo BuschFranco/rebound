@@ -20,7 +20,7 @@ export default function PrivacyPage() {
 
       <h2>1. Responsable de los datos</h2>
       <p>
-        {BUSINESS.legalName} ({BUSINESS.brand}), con domicilio en {BUSINESS.address}. Email:{" "}
+        {BUSINESS.legalName} ({BUSINESS.brand}), CUIT {BUSINESS.cuit}, con domicilio en {BUSINESS.address}. Email:{" "}
         {BUSINESS.email}.
       </p>
 

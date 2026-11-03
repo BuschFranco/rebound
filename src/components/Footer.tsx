@@ -102,7 +102,7 @@ export function Footer({ categories, promotions }: { categories: CategoryInfo[];
 
       <div className="mx-auto max-w-7xl space-y-1 px-4 pb-8 text-xs text-muted sm:px-6">
         <p>
-          {BUSINESS.address} · {BUSINESS.email}
+          {BUSINESS.legalName} · CUIT {BUSINESS.cuit} · {BUSINESS.address} · {BUSINESS.email}
         </p>
         <p>
           Precios finales en pesos argentinos con IVA incluido. El costo de envío se informa antes
