@@ -1,0 +1,10 @@
+# API de la base (PostgREST) en /etc/caddy/sites/rebound-api.caddy.
+# Misma ruta que usaba Supabase (/rest/v1/...), así la tienda y el panel no cambian su código.
+# Las lecturas públicas las limitan las políticas RLS; escribir solo puede el panel (service_role).
+api.reboundstore.com.ar, http://api.reboundstore.com.ar {
+	encode zstd gzip
+	handle_path /rest/v1/* {
+		reverse_proxy 127.0.0.1:3010
+	}
+	respond 404
+}

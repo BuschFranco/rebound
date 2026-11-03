@@ -1,4 +1,4 @@
-"""Acceso a Supabase (PostgREST + Storage) con la secret key, más Georef y la revalidación del sitio.
+"""Acceso a la base (PostgREST) con la clave service_role, fotos en Cloudflare R2, Georef y revalidación del sitio.
 
 La secret key saltea RLS: este módulo corre solo en la PC del dueño, nunca en el sitio.
 """
@@ -81,7 +81,21 @@ class Api:
         self.config = config
         self.rest = f"{config.supabase_url}/rest/v1"
         self.storage = f"{config.supabase_url}/storage/v1"
-        self.public_prefix = f"{self.storage}/object/public/{BUCKET}/"
+        # Fotos: en R2 si hay claves; si no, en el Storage de Supabase (base local con Docker).
+        self.r2 = None
+        if config.r2_access_key_id and config.r2_secret_access_key:
+            import boto3  # solo hace falta con R2
+
+            self.r2 = boto3.client(
+                "s3",
+                endpoint_url=f"https://{config.r2_account_id}.r2.cloudflarestorage.com",
+                aws_access_key_id=config.r2_access_key_id,
+                aws_secret_access_key=config.r2_secret_access_key,
+                region_name="auto",
+            )
+            self.public_prefix = f"{config.r2_public_url}/"
+        else:
+            self.public_prefix = f"{self.storage}/object/public/{BUCKET}/"
         self.session = requests.Session()
         headers = {"apikey": config.secret_key}
         # Las claves viejas (JWT) también van en Authorization; las nuevas (sb_secret_…) solo en apikey.
@@ -107,7 +121,7 @@ class Api:
         try:
             response = self.session.request(method, url, timeout=20, **kwargs)
         except requests.RequestException as exc:
-            raise ApiError(f"No se pudo conectar con Supabase ({self.config.supabase_url}).\n¿Está levantada la base?") from exc
+            raise ApiError(f"No se pudo conectar con la base ({self.config.supabase_url}).\n¿Está levantada?") from exc
         return self._check(response)
 
     @staticmethod
@@ -205,10 +219,19 @@ class Api:
         except OSError as exc:
             raise ApiError(f"No se pudo abrir la imagen {Path(path).name}.") from exc
         key = f"{folder}/{slugify(name) or 'imagen'}-{uuid.uuid4().hex[:8]}.webp"
-        self._request(
-            "POST", f"{self.storage}/object/{BUCKET}/{key}", data=buffer.getvalue(),
-            headers={"Content-Type": "image/webp", "Cache-Control": "max-age=31536000"},
-        )
+        if self.r2:
+            try:
+                self.r2.put_object(
+                    Bucket=self.config.r2_bucket, Key=key, Body=buffer.getvalue(),
+                    ContentType="image/webp", CacheControl="public, max-age=31536000, immutable",
+                )
+            except Exception as exc:  # botocore: sin conexión, credenciales, etc.
+                raise ApiError(f"No se pudo subir la imagen a R2: {exc}") from exc
+        else:
+            self._request(
+                "POST", f"{self.storage}/object/{BUCKET}/{key}", data=buffer.getvalue(),
+                headers={"Content-Type": "image/webp", "Cache-Control": "max-age=31536000"},
+            )
         return self.public_prefix + key
 
     def is_ours(self, url: str) -> bool:
@@ -230,7 +253,16 @@ class Api:
         for b in self.select("site_banners", select="image_url"):
             in_use.add(b["image_url"])
         keys = [u[len(self.public_prefix):] for u in candidates - in_use]
-        if keys:
+        if not keys:
+            return
+        if self.r2:
+            try:
+                self.r2.delete_objects(
+                    Bucket=self.config.r2_bucket, Delete={"Objects": [{"Key": k} for k in keys], "Quiet": True}
+                )
+            except Exception:
+                pass  # Si no se pudo borrar, solo queda una foto huérfana en el bucket.
+        else:
             self._request("DELETE", f"{self.storage}/object/{BUCKET}", json={"prefixes": keys})
 
     def fetch_bytes(self, url: str) -> bytes:

@@ -2,3 +2,4 @@ customtkinter>=5.2
 pillow>=10.0
 python-dotenv>=1.0
 requests>=2.31
+boto3>=1.34

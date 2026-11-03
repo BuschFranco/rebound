@@ -18,6 +18,12 @@ class Config:
     secret_key: str
     site_url: str
     revalidate_secret: str
+    # Fotos en Cloudflare R2 (si faltan las claves, se usa el Storage de Supabase, p. ej. la base local).
+    r2_account_id: str = ""
+    r2_bucket: str = ""
+    r2_public_url: str = ""
+    r2_access_key_id: str = ""
+    r2_secret_access_key: str = ""
 
 
 class ConfigError(Exception):
@@ -28,6 +34,8 @@ def load_config() -> Config:
     # Prioridad: variables de entorno > admin/.env > .env.local del sitio (solo para lo no secreto).
     site = dotenv_values(ROOT_DIR / ".env.local")
     admin = dotenv_values(ADMIN_DIR / ".env")
+    # Claves del token de R2 "rebound-catalog" (archivo local, fuera de git).
+    r2 = dotenv_values(ROOT_DIR / ".r2-catalog.env")
 
     def pick(*names: str, sources=(os.environ, admin, site)) -> str:
         for source in sources:
@@ -51,9 +59,15 @@ def load_config() -> Config:
             "En local la ves con `npx supabase status` (SECRET_KEY).\n"
             "En la nube: Project Settings → API Keys → Secret keys."
         )
+    r2_sources = (os.environ, admin, r2)
     return Config(
         supabase_url=supabase_url.rstrip("/"),
         secret_key=secret_key,
         site_url=site_url.rstrip("/"),
         revalidate_secret=revalidate_secret,
+        r2_account_id=pick("R2_ACCOUNT_ID", sources=r2_sources) or "2e3b069064b630882f2cb54755188225",
+        r2_bucket=pick("R2_BUCKET", sources=r2_sources) or "rebound-catalog",
+        r2_public_url=(pick("R2_PUBLIC_URL", sources=r2_sources) or "https://img.reboundstore.com.ar").rstrip("/"),
+        r2_access_key_id=pick("R2_ACCESS_KEY_ID", sources=r2_sources),
+        r2_secret_access_key=pick("R2_SECRET_ACCESS_KEY", sources=r2_sources),
     )

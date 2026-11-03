@@ -23,3 +23,6 @@ www.reboundstore.com.ar, http://www.reboundstore.com.ar {
 :80 {
 	import app
 }
+
+# Otros sitios de la VPS (API de la base, portfolio, etc.): un archivo por sitio.
+import /etc/caddy/sites/*.caddy

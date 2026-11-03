@@ -60,3 +60,6 @@ admin/.cache/
 
 # Copia local del REVALIDATE_SECRET para el panel (no se sube)
 revalidate-secret.txt
+
+# Claves de Cloudflare R2 (locales, nunca se suben)
+.r2-*.env

@@ -15,7 +15,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // Fotos de ejemplo actuales.
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
-      // Fotos subidas al Storage de Supabase (nube).
+      // Fotos de productos en Cloudflare R2 (servidas por img.reboundstore.com.ar).
+      { protocol: "https", hostname: "img.reboundstore.com.ar", pathname: "/**" },
+      // Fotos subidas al Storage de Supabase (nube) — antes de la migración a R2.
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
       // Storage de Supabase local (Docker), solo en desarrollo.
       ...(isDev

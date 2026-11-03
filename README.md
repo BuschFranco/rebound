@@ -9,7 +9,8 @@ Tienda de indumentaria y zapatillas de basket hecha con Next.js 16 (App Router, 
 | Pieza | Dónde | Notas |
 | --- | --- | --- |
 | Sitio (Next.js) | **VPS Hetzner** → https://reboundstore.com.ar (respaldo: Netlify → https://reboundstore.netlify.app) | Se publica solo con cada push a `main` (`netlify.toml`). |
-| Base de datos y fotos | **Supabase en la nube** (proyecto `ryzwqsbbfqjzcyqykglp`) | Catálogo, promos, envíos, banners, pedidos y el bucket `catalog-images`. |
+| Base de datos | **PostgreSQL 16 + PostgREST en la VPS** → `https://api.reboundstore.com.ar/rest/v1` | Catálogo, promos, envíos, banners, stock, ventas y pedidos. Misma API que Supabase (la tienda y el panel usan el mismo código). Backup semanal a R2. |
+| Fotos | **Cloudflare R2** (bucket `rebound-catalog`) → `https://img.reboundstore.com.ar` | Las sube el panel (claves en `.r2-catalog.env`). |
 | Panel de administración | **Tu PC** (`admin/iniciar.bat`) | Escribe directo en la base de la nube y avisa al sitio publicado para que se actualice al instante. |
 | Código | GitHub → `BuschFranco/rebound` | |
 
@@ -203,3 +204,13 @@ La tienda también se publica en una VPS propia (`2.31.106.97`, Ubuntu 22.04, Fa
 - **Secrets del repo (GitHub → Settings → Secrets → Actions):** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_WHATSAPP_NUMBER`, `NEXT_PUBLIC_SITE_URL`, `REVALIDATE_SECRET` (los mismos valores que en `/etc/rebound/rebound.env`), `VPS_HOST`, `VPS_SSH_KEY` (clave privada del usuario `deploy`) y `VPS_KNOWN_HOSTS` (huella del servidor).
 - **Scripts:** `deploy/vps/provision.sh` (prepara el servidor; se puede volver a correr), `deploy/vps/rebound-deploy` (publica una versión) y `deploy/vps/Caddyfile` (config de Caddy; se copia a `/etc/caddy/Caddyfile` y se recarga con `systemctl reload caddy`).
 - **Comandos útiles** (como root): `systemctl status rebound`, `journalctl -u rebound -n 100`, `ls -lt /srv/rebound/releases`. Volver a una versión anterior: `ln -sfn /srv/rebound/releases/<commit> /srv/rebound/current && systemctl restart rebound`.
+
+## Base de datos en la VPS (reemplaza a Supabase)
+
+- **PostgreSQL 16** (solo escucha en el servidor) + **PostgREST** en `127.0.0.1:3010`, publicado por Caddy en `https://api.reboundstore.com.ar/rest/v1/…` (`deploy/vps/rebound-api.caddy`). Es la misma API que usaba Supabase: las lecturas públicas las limitan las políticas RLS; escribir solo puede el panel con la clave `service_role`.
+- **Claves:** `/root/rebound-db-keys.env` en el servidor (JWT secret, `ANON_KEY` para la tienda, `SERVICE_ROLE_KEY` para el panel). La tienda las recibe por `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` (secrets de GitHub y `/etc/rebound/rebound.env`); el panel por `admin/.env`.
+- **Migraciones:** las de `supabase/migrations/` se aplican con `deploy/vps/provision-db.sh` (registra las aplicadas en `public._migrations`; la del bucket de Supabase se saltea). Para una migración nueva: copiarla al servidor y volver a correr el script.
+- **Fotos:** Cloudflare R2, bucket `rebound-catalog`, dominio `img.reboundstore.com.ar`. El panel sube con el token de `.r2-catalog.env`; sin ese archivo usa el Storage de Supabase (base local con Docker).
+- **Backups:** todos los domingos 03:00 (Argentina), `pg_dump` a R2 (`rebound-backups/db/`), se borran solos a los 90 días (`deploy/vps/provision-backups.sh`). A mano: `rebound-backup`. Restaurar: `rclone copy r2:rebound-backups/db/<archivo> . && sudo -u postgres pg_restore -d rebound --clean --if-exists <archivo>`.
+- **Migración desde Supabase:** `deploy/vps/migrate-from-supabase.sh` (copia datos y fotos y apunta la tienda a la base nueva).
+- **Puertos en la VPS:** 3000 tienda, 3001 portfolio, 3010 PostgREST, 5432 Postgres (todos locales; afuera solo 22/80/443).
