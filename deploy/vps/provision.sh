@@ -78,6 +78,8 @@ Environment=NODE_ENV=production PORT=3000 HOSTNAME=127.0.0.1
 ExecStart=/usr/bin/node server.js
 Restart=always
 RestartSec=3
+# La caché que escribe la app queda editable por el grupo rebound (deploy la puede borrar).
+UMask=0002
 # Endurecimiento: la app solo puede escribir en su carpeta.
 NoNewPrivileges=true
 PrivateTmp=true

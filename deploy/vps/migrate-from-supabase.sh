@@ -9,7 +9,8 @@ OLD_PREFIX="https://ryzwqsbbfqjzcyqykglp.supabase.co/storage/v1/object/public/ca
 NEW_PREFIX="https://img.reboundstore.com.ar/"
 ACCOUNT=2e3b069064b630882f2cb54755188225
 DB=rebound
-DUMP=/root/supabase-data.sql
+# En la carpeta de postgres: /root no es legible para el usuario de la base.
+DUMP=/var/lib/postgresql/supabase-data.sql
 PG17=/usr/lib/postgresql/17/bin
 
 echo "==> Cliente de PostgreSQL 17 (Supabase usa una versión más nueva que la de la VPS)"
@@ -27,7 +28,8 @@ echo "    $(grep -c '^COPY ' "$DUMP") tablas copiadas de Supabase"
 echo "==> 2) Carga en la VPS (vacía las tablas antes, así se puede repetir)"
 tables=$(sudo -u postgres psql -d "$DB" -tAc "select string_agg(format('public.%I', tablename), ', ') from pg_tables where schemaname = 'public' and tablename <> '_migrations'")
 sudo -u postgres psql -d "$DB" -v ON_ERROR_STOP=1 -q -c "truncate $tables restart identity cascade"
-chmod 644 "$DUMP"
+chown postgres:postgres "$DUMP"
+chmod 600 "$DUMP"
 sudo -u postgres "$PG17/psql" -d "$DB" -v ON_ERROR_STOP=1 -q -f "$DUMP" >/dev/null
 rm -f "$DUMP"
 sudo -u postgres psql -d "$DB" -tA -F ': ' -c "
@@ -75,7 +77,13 @@ update promotions set banner_image_url = replace(banner_image_url, '${OLD_PREFIX
 update site_banners set image_url = replace(image_url, '${OLD_PREFIX}', '${NEW_PREFIX}') where image_url like '${OLD_PREFIX}%';
 SQL
 
-echo "==> 4) La tienda apunta a la base nueva"
+echo "==> 4) Permisos del deploy (la caché de la app se puede borrar al limpiar versiones viejas)"
+grep -q '^UMask=0002' /etc/systemd/system/rebound.service || sed -i '/^RestartSec=3$/a UMask=0002' /etc/systemd/system/rebound.service
+systemctl daemon-reload
+chmod -R g+w /srv/rebound/releases
+[ -f /root/rebound-deploy ] && install -m 755 /root/rebound-deploy /usr/local/bin/rebound-deploy && rm -f /root/rebound-deploy
+
+echo "==> 5) La tienda apunta a la base nueva"
 . /root/rebound-db-keys.env
 sed -i "s|^SUPABASE_URL=.*|SUPABASE_URL=https://api.reboundstore.com.ar|; s|^SUPABASE_PUBLISHABLE_KEY=.*|SUPABASE_PUBLISHABLE_KEY=${ANON_KEY}|" /etc/rebound/rebound.env
 systemctl restart rebound
