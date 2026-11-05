@@ -9,6 +9,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { trackAddToCart } from "@/lib/analytics";
 import { cartStore } from "@/lib/cartStore";
 import { validateCart, type CartNotice } from "@/lib/cartValidation";
 import { useCatalog } from "./CatalogContext";
@@ -71,6 +72,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         name: product.name,
         seenPrice: product.price,
       });
+      trackAddToCart(product, size, color, quantity);
       setIsOpen(true);
     },
     [],

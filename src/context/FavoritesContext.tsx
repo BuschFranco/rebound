@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { favoritesStore } from "@/lib/favoritesStore";
+import { trackAddToFavorites } from "@/lib/analytics";
 import { getProductById } from "@/lib/products";
 import type { Product } from "@/types";
 import { useCatalog } from "./CatalogContext";
@@ -40,7 +41,13 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       products,
       count: products.length,
       isFavorite: (id) => set.has(id),
-      toggle: favoritesStore.toggle,
+      toggle: (id) => {
+        if (!set.has(id)) {
+          const product = getProductById(catalog, id);
+          if (product) trackAddToFavorites(product);
+        }
+        favoritesStore.toggle(id);
+      },
       remove: favoritesStore.remove,
       clear: favoritesStore.clear,
       isOpen,

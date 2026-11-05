@@ -15,6 +15,7 @@ import type { SavedAddress } from "@/types";
 import { addressStore } from "@/lib/addressStore";
 import { buildOrder, hasFreeShipping, type Order } from "@/lib/order";
 import { getCartSuggestions, variantLimit } from "@/lib/products";
+import { trackWhatsAppCheckout } from "@/lib/analytics";
 import { buildOrderMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { CartNotices } from "./CartNotices";
 import { CartPromo } from "./CartPromo";
@@ -77,6 +78,7 @@ export function CartDrawer() {
 
   /** Abre WhatsApp en una ventana ya abierta durante el clic (los navegadores bloquean abrirla después de esperar). */
   function sendTo(win: Window | null, finalOrder: Order) {
+    trackWhatsAppCheckout(finalOrder);
     const url = buildWhatsAppUrl(buildOrderMessage(finalOrder, address, siteUrl()));
     if (win) win.location.assign(url);
     else window.location.assign(url);
